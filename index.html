@@ -57,6 +57,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 #wallpaperLayer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.95;z-index:0;}
 #topBar{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(10,9,12,.92);border-bottom:1px solid rgba(196,150,140,.12);}
 #topBar .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--soft-purple),var(--rose-gold));background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;cursor:pointer;}
+#topBar .avatar.has-status{box-shadow:0 0 0 2px #08070a,0 0 0 4px var(--rose-gold);}
 .tinfo{display:flex;flex-direction:column;cursor:pointer;flex:1;min-width:0;}
 .tname{font-weight:600;font-size:15px;}
 .tstatus{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;}
@@ -76,9 +77,21 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 .bubble.pending{opacity:.65;font-style:italic;}
 .bubble .meta{font-size:10px;opacity:.75;margin-top:3px;text-align:right;}
 .bubble audio{max-width:190px;}
-.bubble img,.bubble video{max-width:190px;border-radius:10px;display:block;}
+.bubble img.tapzoom,.bubble video.tapzoom{max-width:190px;border-radius:10px;display:block;cursor:pointer;}
 .bubble a{color:var(--soft-pink);}
+.voice-player{display:flex;align-items:center;gap:8px;min-width:190px;}
+.voice-player audio{display:none;}
+.vp-play{width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:var(--ink);font-size:12px;cursor:pointer;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+.vp-wave{display:flex;align-items:center;gap:2px;height:18px;flex:1;min-width:60px;}
+.vp-wave span{width:3px;background:var(--rose-gold);border-radius:2px;opacity:.45;transition:opacity .2s;}
+.vp-wave.playing span{animation:vpwave 0.9s ease-in-out infinite;opacity:1;}
+@keyframes vpwave{0%,100%{transform:scaleY(.45);}50%{transform:scaleY(1);}}
+.vp-time{font-size:10.5px;color:var(--muted);min-width:64px;text-align:right;flex:0 0 auto;}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;align-items:center;justify-content:center;}
+.lightbox img,.lightbox video{max-width:94vw;max-height:88vh;border-radius:8px;}
+.lightbox-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:16px;background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;}
 .bubble.sticker{font-size:34px;background:none;padding:0;}
+.msgrow.me .bubble.sticker,.msgrow.them .bubble.sticker{background:none;border:none;box-shadow:none;padding:0;}
 
 #inputArea{position:relative;z-index:2;background:rgba(10,9,12,.92);border-top:1px solid rgba(196,150,140,.12);}
 #inputRow{display:flex;align-items:center;gap:7px;padding:8px 12px;}
@@ -215,6 +228,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 <input type="file" id="galVideo" accept="video/*" class="hidden">
 <input type="file" id="avatarInput" accept="image/*" class="hidden">
 <input type="file" id="wallpaperInput" accept="image/*" class="hidden">
+<input type="file" id="statusPhotoInput" accept="image/*" class="hidden">
 
 <!-- MORE OPTIONS -->
 <div id="moreOptions" class="hidden">
@@ -310,7 +324,7 @@ const WALLPAPERS = [
 ];
 const USERS = {
   irfu: { id:"irfu", emoji:"🧸", password:"irfu" },
-  rifu: { id:"rifu", emoji:"👰🏻‍♀️", password:"rifu" }
+  rifu: { id:"rifu", emoji:"👰🏻‍♀️", password:"2012" }
 };
 let currentUser=null, partnerId=null, profiles={};
 let typingTimeout=null;
@@ -412,20 +426,30 @@ async function enterChat(id){
   subscribeRealtime();
 }
 
+function hasActiveStatus(p){
+  return !!(p && p.status_media_url && p.status_at && (Date.now()-new Date(p.status_at).getTime()) < 24*3600*1000);
+}
 function renderTopBar(){
   const p = profiles[partnerId]||{};
   const avatarEl = el('partnerAvatar');
   avatarEl.textContent = USERS[partnerId].emoji;
   avatarEl.style.backgroundImage = p.avatar_url?`url(${p.avatar_url})`:'';
+  avatarEl.classList.toggle('has-status', hasActiveStatus(p));
   el('partnerName').textContent = p.name || partnerId;
   el('partnerDot').className = 'dot' + (p.online?'':' offline');
   el('partnerStatusText').textContent = p.online?'Online':timeAgo(p.last_seen);
   if(p.mood){ el('partnerMoodBadge').textContent=moodLabel(p.mood); el('partnerMoodBadge').classList.remove('hidden'); }
   else el('partnerMoodBadge').classList.add('hidden');
 }
+setInterval(()=>{ if(partnerId) renderTopBar(); },60000);
 function moodLabel(k){ const m=MOODS.find(x=>x.k===k); return m?m.e:k; }
 el('topInfo').onclick = openProfile;
-el('partnerAvatar').onclick = openProfile;
+el('partnerAvatar').onclick = ()=>{
+  const p=profiles[partnerId]||{};
+  if(hasActiveStatus(p)) openLightbox(p.status_media_url,false);
+  else openProfile();
+};
+
 
 const MOODS=[
   {k:'school',e:'🏫 School'},{k:'work',e:'💼 Work'},{k:'outside',e:'🚶 Outside'},
@@ -525,9 +549,9 @@ function renderMessage(m){
   let inner='';
   if(m.type==='text') inner=escapeHtml(m.content);
   else if(m.type==='sticker'){ bub.classList.add('sticker'); inner=m.content; }
-  else if(m.type==='voice') inner=`<audio controls src="${m.media_url}"></audio>`;
-  else if(m.type==='image') inner=`<img src="${m.media_url}">`;
-  else if(m.type==='video') inner=`<video controls src="${m.media_url}"></video>`;
+  else if(m.type==='voice') inner=voicePlayerHTML(m.media_url);
+  else if(m.type==='image') inner=`<img src="${m.media_url}" class="tapzoom">`;
+  else if(m.type==='video') inner=`<video src="${m.media_url}" class="tapzoom" muted playsinline preload="metadata"></video>`;
   else if(m.type==='location') inner=`📍 <a href="${m.content}" target="_blank">Shared location</a>`;
   if(m.type!=='sticker'){
     const ticks = mine ? (m.seen?'✓✓':'✓') : '';
@@ -536,8 +560,57 @@ function renderMessage(m){
   bub.innerHTML=inner;
   row.appendChild(mini); row.appendChild(bub);
   wrap.appendChild(row); wrap.scrollTop=wrap.scrollHeight;
+  if(m.type==='voice') initVoicePlayer(bub);
+  if(m.type==='image'||m.type==='video'){
+    const media=bub.querySelector('.tapzoom');
+    if(media) media.onclick=()=>openLightbox(m.media_url,m.type==='video');
+  }
 }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---- custom voice player ---- */
+function voicePlayerHTML(url){
+  let bars='';
+  for(let i=0;i<16;i++){ const h=6+Math.round(Math.sin(i*1.3)*5)+((i%3)*2); bars+=`<span style="height:${h}px;animation-delay:${(i*0.06).toFixed(2)}s"></span>`; }
+  return `<div class="voice-player">
+    <button class="vp-play" type="button">▶</button>
+    <div class="vp-wave">${bars}</div>
+    <span class="vp-time">0:00</span>
+    <audio preload="metadata" src="${url}"></audio>
+  </div>`;
+}
+function fmtDur(s){ if(!isFinite(s)||s<0) return '0:00'; const m=Math.floor(s/60); const sec=Math.floor(s%60); return `${m}:${String(sec).padStart(2,'0')}`; }
+function initVoicePlayer(scopeEl){
+  const container=scopeEl.querySelector('.voice-player'); if(!container) return;
+  const btn=container.querySelector('.vp-play');
+  const audio=container.querySelector('audio');
+  const wave=container.querySelector('.vp-wave');
+  const timeEl=container.querySelector('.vp-time');
+  audio.addEventListener('loadedmetadata', ()=>{ timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; });
+  audio.addEventListener('timeupdate', ()=>{ timeEl.textContent=`${fmtDur(audio.currentTime)} / ${fmtDur(audio.duration)}`; });
+  audio.addEventListener('ended', ()=>{ btn.textContent='▶'; wave.classList.remove('playing'); timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; });
+  btn.onclick=()=>{
+    if(audio.paused){
+      document.querySelectorAll('.voice-player audio').forEach(a=>{ if(a!==audio) a.pause(); });
+      document.querySelectorAll('.vp-wave.playing').forEach(w=>{ if(w!==wave) w.classList.remove('playing'); });
+      document.querySelectorAll('.vp-play').forEach(b=>{ if(b!==btn) b.textContent='▶'; });
+      audio.play(); btn.textContent='⏸'; wave.classList.add('playing');
+    } else {
+      audio.pause(); btn.textContent='▶'; wave.classList.remove('playing');
+    }
+  };
+}
+
+/* ---- fullscreen lightbox for images/videos ---- */
+function openLightbox(url,isVideo){
+  const overlay=document.createElement('div');
+  overlay.className='lightbox';
+  overlay.innerHTML = isVideo
+    ? `<video src="${url}" controls autoplay playsinline></video><button class="lightbox-close" type="button">✕</button>`
+    : `<img src="${url}"><button class="lightbox-close" type="button">✕</button>`;
+  overlay.onclick=(e)=>{ if(e.target===overlay||e.target.classList.contains('lightbox-close')) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
 
 async function sendMessage(payload){
   const labels={voice:'Sending voice message...',image:'Sending message...',video:'Sending video...'};
@@ -601,7 +674,7 @@ el('micBtn').onclick=async()=>{
         broadcastActivity('sending','Sending voice message...');
         const blob=new Blob(chunks,{type:'audio/webm'});
         const path=`voice/${crypto.randomUUID()}.webm`;
-        await sb.storage.from(BUCKET).upload(path,blob);
+        await sb.storage.from(BUCKET).upload(path,blob,{contentType:'audio/webm'});
         const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
         await sendMessage({type:'voice',media_url:pub.publicUrl});
       };
@@ -623,7 +696,7 @@ el('cancelRec').onclick=()=>{ if(mediaRecorder&&mediaRecorder.state!=='inactive'
 async function uploadAndSend(file,type){
   broadcastActivity('sending','Uploading...');
   const path=`media/${crypto.randomUUID()}-${file.name}`;
-  await sb.storage.from(BUCKET).upload(path,file);
+  await sb.storage.from(BUCKET).upload(path,file,{contentType:file.type||'application/octet-stream'});
   const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
   await sendMessage({type,media_url:pub.publicUrl});
 }
@@ -647,10 +720,27 @@ el('optBubble').onclick=()=>{ closeMore(); el('bubbleColourSheet').classList.rem
 el('optWallpaper').onclick=()=>{ closeMore(); openWallpaperPicker(); };
 el('optStatus').onclick=async()=>{
   closeMore();
+  const wantPhoto = confirm('Add a photo status (shows as a ring on your avatar for 24h)?\n\nOK = choose a photo\nCancel = type a text status instead');
+  if(wantPhoto){ el('statusPhotoInput').click(); return; }
   const val=prompt('Set your status',(profiles[currentUser]&&profiles[currentUser].status)||'');
   if(val==null) return;
   await sb.from('profiles').update({status:val}).eq('id',currentUser);
   profiles[currentUser].status=val;
+};
+el('statusPhotoInput').onchange=async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  broadcastActivity('sending','Uploading...');
+  try{
+    const path=`status/${currentUser}-${Date.now()}.jpg`;
+    await sb.storage.from(BUCKET).upload(path,file,{contentType:file.type||'image/jpeg'});
+    const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
+    const nowIso=new Date().toISOString();
+    await sb.from('profiles').update({status_media_url:pub.publicUrl,status_at:nowIso}).eq('id',currentUser);
+    profiles[currentUser].status_media_url=pub.publicUrl;
+    profiles[currentUser].status_at=nowIso;
+  }catch(err){ console.warn('status photo upload failed:',err); }
+  broadcastActivity('idle');
+  e.target.value='';
 };
 el('optHere').onclick=()=>{
   closeMore();
@@ -733,7 +823,7 @@ el('wallpaperInput').onchange=async e=>{
   broadcastActivity('sending','Uploading...');
   try{
     const path=`wallpapers/${currentUser}-${Date.now()}.jpg`;
-    await sb.storage.from(BUCKET).upload(path,file,{upsert:true});
+    await sb.storage.from(BUCKET).upload(path,file,{upsert:true,contentType:file.type||'image/jpeg'});
     const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
     await sb.from('profiles').update({wallpaper_url:pub.publicUrl,wallpaper_css:null}).eq('id',currentUser);
     profiles[currentUser].wallpaper_url=pub.publicUrl;
@@ -763,12 +853,12 @@ function openProfile(){
   const days=Math.floor((Date.now()-START_DATE.getTime())/86400000)+1;
   el('dayCounter').textContent=`Day ${days}`;
   el('startDateLabel').textContent=`Since ${START_DATE.toLocaleDateString('en-GB')}`;
-  el('statusVal').textContent=me.status||'All good';
+  const partner=profiles[partnerId]||{};
+  el('statusVal').textContent=partner.status||'All good';
   el('stKiss').textContent=`Given ${me.kisses_given||0} · Received ${me.kisses_received||0}`;
   el('stHug').textContent=`Given ${me.hugs_given||0} · Received ${me.hugs_received||0}`;
   el('stSlap').textContent=`Given ${me.slaps_given||0} · Received ${me.slaps_received||0}`;
   el('birthdayInput').value=me.birthday||'';
-  const partner=profiles[partnerId]||{};
   el('partnerBirthday').textContent=partner.birthday?new Date(partner.birthday).toLocaleDateString('en-GB'):'—';
   el('profilePanel').classList.remove('hidden');
   requestAnimationFrame(()=>el('profilePanel').classList.add('open'));
@@ -787,7 +877,7 @@ el('changeAvatarBtn').onclick=()=>el('avatarInput').click();
 el('avatarInput').onchange=async e=>{
   const file=e.target.files[0]; if(!file) return;
   const path=`avatars/${currentUser}.jpg`;
-  await sb.storage.from(BUCKET).upload(path,file,{upsert:true});
+  await sb.storage.from(BUCKET).upload(path,file,{upsert:true,contentType:file.type||'image/jpeg'});
   const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
   await sb.from('profiles').update({avatar_url:pub.publicUrl}).eq('id',currentUser);
   profiles[currentUser].avatar_url=pub.publicUrl;
