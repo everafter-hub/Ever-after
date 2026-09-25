@@ -64,7 +64,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 .mood-badge{font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:10px;}
 .topbtn{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:var(--ink);font-size:17px;cursor:pointer;}
 .logoutbtn{flex:0 0 auto;padding:0 12px;height:36px;border-radius:18px;border:none;background:rgba(255,255,255,.08);color:var(--muted);font-size:12px;cursor:pointer;}
-#activityChip{position:absolute;top:56px;left:12px;z-index:3;background:rgba(18,16,20,.92);padding:5px 12px;border-radius:14px;font-size:12px;display:none;}
+#activityChip{position:absolute;top:56px;left:12px;z-index:3;background:rgba(18,16,20,.92);padding:5px 12px;border-radius:14px;font-size:12px;display:block;}
 #messages{position:relative;z-index:1;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 12px;display:flex;flex-direction:column;gap:8px;}
 .daysep{align-self:center;font-size:11px;color:var(--muted);background:rgba(255,255,255,.07);padding:4px 12px;border-radius:12px;margin:6px 0;}
 .msgrow{display:flex;align-items:flex-end;gap:6px;max-width:82%;}
@@ -412,6 +412,7 @@ async function enterChat(id){
   renderMoodBar();
   applyWallpaper();
   applyBubbleColour();
+  showActivity(null);
   requestAnimationFrame(()=>el('chatScreen').classList.add('show'));
   setTimeout(()=>el('lockScreen').classList.add('hidden'),400);
 
@@ -491,13 +492,13 @@ function setupActivityChannel(){
   }).subscribe();
 }
 function broadcastActivity(state,label){
+  showActivity(state==='idle'?null:label);
   if(!activityChannel) return;
   activityChannel.send({type:'broadcast',event:'activity',payload:{from:currentUser,state,label}});
 }
 function showActivity(label){
   const chip = el('activityChip');
-  if(label){ chip.textContent=label; chip.style.display='block'; }
-  else chip.style.display='none';
+  chip.textContent = label || 'All good';
 }
 el('textInput').addEventListener('input', ()=>{
   broadcastActivity('typing', `Typing...`);
@@ -507,7 +508,7 @@ el('textInput').addEventListener('input', ()=>{
 
 /* ===================== messages ===================== */
 async function loadMessages(){
-  const res = await sb.from('messages').select('*')
+  const res = await sb.from('messages').select('id,sender_id,receiver_id,type,content,media_url,created_at,seen,seen_at')
     .or(`and(sender_id.eq.${currentUser},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${currentUser})`)
     .order('created_at',{ascending:true}).limit(300);
   const wrap=el('messages'); wrap.innerHTML='';
@@ -549,7 +550,7 @@ function renderMessage(m){
   let inner='';
   if(m.type==='text') inner=escapeHtml(m.content);
   else if(m.type==='sticker'){ bub.classList.add('sticker'); inner=m.content; }
-  else if(m.type==='voice') inner=voicePlayerHTML(m.media_url);
+  else if(m.type==='voice') inner=voicePlayerHTML();
   else if(m.type==='image') inner=`<img src="${m.media_url}" class="tapzoom">`;
   else if(m.type==='video') inner=`<video src="${m.media_url}" class="tapzoom" muted playsinline preload="metadata"></video>`;
   else if(m.type==='location') inner=`📍 <a href="${m.content}" target="_blank">Shared location</a>`;
@@ -560,7 +561,7 @@ function renderMessage(m){
   bub.innerHTML=inner;
   row.appendChild(mini); row.appendChild(bub);
   wrap.appendChild(row); wrap.scrollTop=wrap.scrollHeight;
-  if(m.type==='voice') initVoicePlayer(bub);
+  if(m.type==='voice') initVoicePlayer(bub,m.id,m.voice_data);
   if(m.type==='image'||m.type==='video'){
     const media=bub.querySelector('.tapzoom');
     if(media) media.onclick=()=>openLightbox(m.media_url,m.type==='video');
@@ -568,36 +569,59 @@ function renderMessage(m){
 }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-/* ---- custom voice player ---- */
-function voicePlayerHTML(url){
+/* ---- custom voice player — audio is stored as base64 directly on the message row,
+   never touches Storage. Data is only fetched the first time someone taps play. ---- */
+const voiceDataCache = new Map();
+let allVoiceAudios = [];
+function voicePlayerHTML(){
   let bars='';
   for(let i=0;i<16;i++){ const h=6+Math.round(Math.sin(i*1.3)*5)+((i%3)*2); bars+=`<span style="height:${h}px;animation-delay:${(i*0.06).toFixed(2)}s"></span>`; }
   return `<div class="voice-player">
     <button class="vp-play" type="button">▶</button>
     <div class="vp-wave">${bars}</div>
-    <span class="vp-time">0:00</span>
-    <audio preload="metadata" src="${url}"></audio>
+    <span class="vp-time">0:00 / 0:00</span>
   </div>`;
 }
 function fmtDur(s){ if(!isFinite(s)||s<0) return '0:00'; const m=Math.floor(s/60); const sec=Math.floor(s%60); return `${m}:${String(sec).padStart(2,'0')}`; }
-function initVoicePlayer(scopeEl){
+function initVoicePlayer(scopeEl,messageId,initialData){
   const container=scopeEl.querySelector('.voice-player'); if(!container) return;
   const btn=container.querySelector('.vp-play');
-  const audio=container.querySelector('audio');
   const wave=container.querySelector('.vp-wave');
   const timeEl=container.querySelector('.vp-time');
-  audio.addEventListener('loadedmetadata', ()=>{ timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; });
-  audio.addEventListener('timeupdate', ()=>{ timeEl.textContent=`${fmtDur(audio.currentTime)} / ${fmtDur(audio.duration)}`; });
-  audio.addEventListener('ended', ()=>{ btn.textContent='▶'; wave.classList.remove('playing'); timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; });
-  btn.onclick=()=>{
-    if(audio.paused){
-      document.querySelectorAll('.voice-player audio').forEach(a=>{ if(a!==audio) a.pause(); });
-      document.querySelectorAll('.vp-wave.playing').forEach(w=>{ if(w!==wave) w.classList.remove('playing'); });
-      document.querySelectorAll('.vp-play').forEach(b=>{ if(b!==btn) b.textContent='▶'; });
-      audio.play(); btn.textContent='⏸'; wave.classList.add('playing');
-    } else {
-      audio.pause(); btn.textContent='▶'; wave.classList.remove('playing');
+  if(initialData) voiceDataCache.set(messageId,initialData);
+  let audio=null;
+  function wire(){
+    allVoiceAudios.push(audio);
+    audio.addEventListener('loadedmetadata', ()=>{ timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; });
+    audio.addEventListener('timeupdate', ()=>{ timeEl.textContent=`${fmtDur(audio.currentTime)} / ${fmtDur(audio.duration)}`; });
+    audio.addEventListener('ended', ()=>{ btn.textContent='▶'; wave.classList.remove('playing'); timeEl.textContent=`0:00 / ${fmtDur(audio.duration)}`; showActivity(null); });
+  }
+  btn.onclick=async()=>{
+    if(audio){
+      if(audio.paused){
+        allVoiceAudios.forEach(a=>{ if(a!==audio){ a.pause(); } });
+        document.querySelectorAll('.vp-wave.playing').forEach(w=>{ if(w!==wave) w.classList.remove('playing'); });
+        document.querySelectorAll('.vp-play').forEach(b=>{ if(b!==btn) b.textContent='▶'; });
+        audio.play(); btn.textContent='⏸'; wave.classList.add('playing'); showActivity('Playing voice message...');
+      } else {
+        audio.pause(); btn.textContent='▶'; wave.classList.remove('playing'); showActivity(null);
+      }
+      return;
     }
+    btn.textContent='⏳';
+    let dataUrl = voiceDataCache.get(messageId);
+    if(!dataUrl){
+      try{
+        const res = await sb.from('messages').select('voice_data').eq('id',messageId).single();
+        dataUrl = res.data && res.data.voice_data;
+        if(dataUrl) voiceDataCache.set(messageId,dataUrl);
+      }catch(err){ console.warn('voice load failed:',err); }
+    }
+    if(!dataUrl){ btn.textContent='▶'; return; }
+    audio=new Audio(dataUrl);
+    wire();
+    allVoiceAudios.forEach(a=>{ if(a!==audio) a.pause(); });
+    audio.play(); btn.textContent='⏸'; wave.classList.add('playing'); showActivity('Playing voice message...');
   };
 }
 
@@ -613,7 +637,7 @@ function openLightbox(url,isVideo){
 }
 
 async function sendMessage(payload){
-  const labels={voice:'Sending voice message...',image:'Sending message...',video:'Sending video...'};
+  const labels={voice:'Sending voice message...',image:'Sending photo...',video:'Sending video...'};
   broadcastActivity('sending', labels[payload.type]||'Sending message...');
   const pendingEl = addPending(payload);
   const row = Object.assign({sender_id:currentUser,receiver_id:partnerId},payload);
@@ -669,14 +693,15 @@ el('micBtn').onclick=async()=>{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       mediaRecorder=new MediaRecorder(stream); chunks=[];
       mediaRecorder.ondataavailable=e=>chunks.push(e.data);
-      mediaRecorder.onstop=async()=>{
+      mediaRecorder.onstop=()=>{
         clearInterval(recInterval); el('recordingBar').style.display='none'; btn.classList.remove('recording');
-        broadcastActivity('sending','Sending voice message...');
         const blob=new Blob(chunks,{type:'audio/webm'});
-        const path=`voice/${crypto.randomUUID()}.webm`;
-        await sb.storage.from(BUCKET).upload(path,blob,{contentType:'audio/webm'});
-        const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
-        await sendMessage({type:'voice',media_url:pub.publicUrl});
+        if(blob.size<200){ broadcastActivity('idle'); return; } /* ignore accidental taps with no audio */
+        const reader=new FileReader();
+        reader.onloadend=()=>{
+          sendMessage({type:'voice',voice_data:reader.result});
+        };
+        reader.readAsDataURL(blob);
       };
       mediaRecorder.start();
       btn.classList.add('recording');
@@ -686,7 +711,7 @@ el('micBtn').onclick=async()=>{
         const s=Math.floor((Date.now()-recStart)/1000);
         el('recTimer').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
       },1000);
-      broadcastActivity('recording','Recording...');
+      broadcastActivity('recording','Recording voice message...');
     }catch(err){ alert('Mic permission denied'); }
   } else { mediaRecorder.stop(); }
 };
@@ -694,11 +719,25 @@ el('cancelRec').onclick=()=>{ if(mediaRecorder&&mediaRecorder.state!=='inactive'
 
 /* ===================== media uploads ===================== */
 async function uploadAndSend(file,type){
-  broadcastActivity('sending','Uploading...');
-  const path=`media/${crypto.randomUUID()}-${file.name}`;
-  await sb.storage.from(BUCKET).upload(path,file,{contentType:file.type||'application/octet-stream'});
-  const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
-  await sendMessage({type,media_url:pub.publicUrl});
+  const maxMB=25;
+  if(file.size>maxMB*1024*1024){ alert(`File is too big 😅 keep it under ${maxMB}MB`); return; }
+  broadcastActivity('sending', type==='video'?'Sending video...':'Sending photo...');
+  try{
+    const ext=(file.name.split('.').pop()||'dat').toLowerCase();
+    const path=`media/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},
+      body:file
+    });
+    if(!res.ok){ const t=await res.text(); throw new Error('Upload failed ('+res.status+'): '+t); }
+    const publicUrl=`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+    await sendMessage({type,media_url:publicUrl});
+  }catch(err){
+    console.warn('media upload failed:',err);
+    alert('Upload failed 🙏 '+err.message);
+    broadcastActivity('idle');
+  }
 }
 el('camPhoto').onchange=e=>{ if(e.target.files[0]) uploadAndSend(e.target.files[0],'image'); e.target.value=''; };
 el('galPhoto').onchange=e=>{ if(e.target.files[0]) uploadAndSend(e.target.files[0],'image'); e.target.value=''; };
