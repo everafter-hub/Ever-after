@@ -90,6 +90,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;align-items:center;justify-content:center;}
 .lightbox img,.lightbox video{max-width:94vw;max-height:88vh;border-radius:8px;}
 .lightbox-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:16px;background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;}
+.lightbox-dl{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:62px;background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;}
 .bubble.sticker{font-size:34px;background:none;padding:0;}
 .msgrow.me .bubble.sticker,.msgrow.them .bubble.sticker{background:none;border:none;box-shadow:none;padding:0;}
 
@@ -143,7 +144,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 .wp-swatch{aspect-ratio:9/16;border-radius:10px;cursor:pointer;border:2px solid transparent;background-size:cover;background-position:center;}
 .wp-swatch.selected{border-color:var(--soft-pink);}
 .close-x{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
-.avatar-big{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--soft-purple),var(--rose-gold));background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto;}
+.avatar-big{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--soft-purple),var(--rose-gold));background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto;cursor:pointer;}
 .pfield{margin-top:16px;}
 .pfield label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px;}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
@@ -294,14 +295,21 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
       <div class="stat"><div class="ic">🤗</div>Hugs<div class="gv" id="stHug">Given 0 · Received 0</div></div>
       <div class="stat"><div class="ic">👋</div>Slaps<div class="gv" id="stSlap">Given 0 · Received 0</div></div>
     </div>
-    <div class="pfield">
+    <div class="pfield" id="editBirthdaySection">
       <label>Your birthday</label>
       <input type="date" id="birthdayInput">
       <div class="btn-row"><button class="primary" id="saveBirthday">Save</button></div>
     </div>
-    <div class="pfield">
+    <div class="pfield" id="partnerBirthdaySection">
       <label>Partner's birthday</label>
       <div id="partnerBirthday" style="color:var(--muted);font-size:14px;">—</div>
+    </div>
+    <div class="pfield" id="viewOnlyBirthdaySection" style="display:none;">
+      <label>Birthday</label>
+      <div id="viewOnlyBirthdayVal" style="color:var(--muted);font-size:14px;">—</div>
+    </div>
+    <div class="pfield" id="viewSelfBtnWrap" style="display:none;">
+      <button class="ghost" id="viewSelfBtn" style="width:100%;">View Your Profile</button>
     </div>
   </div>
 </div>
@@ -433,7 +441,7 @@ function hasActiveStatus(p){
 function renderTopBar(){
   const p = profiles[partnerId]||{};
   const avatarEl = el('partnerAvatar');
-  avatarEl.textContent = USERS[partnerId].emoji;
+  avatarEl.textContent = p.avatar_url ? '' : USERS[partnerId].emoji;
   avatarEl.style.backgroundImage = p.avatar_url?`url(${p.avatar_url})`:'';
   avatarEl.classList.toggle('has-status', hasActiveStatus(p));
   el('partnerName').textContent = p.name || partnerId;
@@ -444,11 +452,11 @@ function renderTopBar(){
 }
 setInterval(()=>{ if(partnerId) renderTopBar(); },60000);
 function moodLabel(k){ const m=MOODS.find(x=>x.k===k); return m?m.e:k; }
-el('topInfo').onclick = openProfile;
+el('topInfo').onclick = ()=>openProfile(partnerId);
 el('partnerAvatar').onclick = ()=>{
   const p=profiles[partnerId]||{};
   if(hasActiveStatus(p)) openLightbox(p.status_media_url,false);
-  else openProfile();
+  else openProfile(partnerId);
 };
 
 
@@ -625,13 +633,25 @@ function initVoicePlayer(scopeEl,messageId,initialData){
   };
 }
 
-/* ---- fullscreen lightbox for images/videos ---- */
+/* ---- fullscreen lightbox for images/videos, with download ---- */
+async function downloadFile(url){
+  try{
+    const res=await fetch(url);
+    const blob=await res.blob();
+    const blobUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=blobUrl; a.download=(url.split('/').pop()||'download').split('?')[0];
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(blobUrl);
+  }catch(err){ window.open(url,'_blank'); }
+}
 function openLightbox(url,isVideo){
   const overlay=document.createElement('div');
   overlay.className='lightbox';
   overlay.innerHTML = isVideo
-    ? `<video src="${url}" controls autoplay playsinline></video><button class="lightbox-close" type="button">✕</button>`
-    : `<img src="${url}"><button class="lightbox-close" type="button">✕</button>`;
+    ? `<video src="${url}" controls autoplay playsinline></video><button class="lightbox-dl" type="button">⬇</button><button class="lightbox-close" type="button">✕</button>`
+    : `<img src="${url}"><button class="lightbox-dl" type="button">⬇</button><button class="lightbox-close" type="button">✕</button>`;
+  overlay.querySelector('.lightbox-dl').onclick=(e)=>{ e.stopPropagation(); downloadFile(url); };
   overlay.onclick=(e)=>{ if(e.target===overlay||e.target.classList.contains('lightbox-close')) overlay.remove(); };
   document.body.appendChild(overlay);
 }
@@ -884,21 +904,38 @@ function applyWallpaper(){
 }
 
 /* ===================== profile panel ===================== */
-function openProfile(){
-  const me=profiles[currentUser]||{};
-  el('myAvatarBig').textContent=USERS[currentUser].emoji;
-  el('myAvatarBig').style.backgroundImage=me.avatar_url?`url(${me.avatar_url})`:'';
-  el('myNameBig').textContent=me.name||currentUser;
+let profilePanelViewId=null;
+function openProfile(viewId){
+  viewId = viewId || currentUser;
+  profilePanelViewId = viewId;
+  const viewingSelf = viewId===currentUser;
+  const p=profiles[viewId]||{};
+  el('myAvatarBig').textContent = p.avatar_url ? '' : USERS[viewId].emoji;
+  el('myAvatarBig').style.backgroundImage = p.avatar_url?`url(${p.avatar_url})`:'';
+  el('myNameBig').textContent=p.name||viewId;
   const days=Math.floor((Date.now()-START_DATE.getTime())/86400000)+1;
   el('dayCounter').textContent=`Day ${days}`;
   el('startDateLabel').textContent=`Since ${START_DATE.toLocaleDateString('en-GB')}`;
-  const partner=profiles[partnerId]||{};
-  el('statusVal').textContent=partner.status||'All good';
-  el('stKiss').textContent=`Given ${me.kisses_given||0} · Received ${me.kisses_received||0}`;
-  el('stHug').textContent=`Given ${me.hugs_given||0} · Received ${me.hugs_received||0}`;
-  el('stSlap').textContent=`Given ${me.slaps_given||0} · Received ${me.slaps_received||0}`;
-  el('birthdayInput').value=me.birthday||'';
-  el('partnerBirthday').textContent=partner.birthday?new Date(partner.birthday).toLocaleDateString('en-GB'):'—';
+  el('statusVal').textContent=p.status||'All good';
+  el('stKiss').textContent=`Given ${p.kisses_given||0} · Received ${p.kisses_received||0}`;
+  el('stHug').textContent=`Given ${p.hugs_given||0} · Received ${p.hugs_received||0}`;
+  el('stSlap').textContent=`Given ${p.slaps_given||0} · Received ${p.slaps_received||0}`;
+  el('changeAvatarBtn').parentElement.style.display = viewingSelf?'':'none';
+  if(viewingSelf){
+    el('editBirthdaySection').style.display='';
+    el('partnerBirthdaySection').style.display='';
+    el('viewOnlyBirthdaySection').style.display='none';
+    el('viewSelfBtnWrap').style.display='none';
+    el('birthdayInput').value=p.birthday||'';
+    const partner=profiles[partnerId]||{};
+    el('partnerBirthday').textContent=partner.birthday?new Date(partner.birthday).toLocaleDateString('en-GB'):'—';
+  } else {
+    el('editBirthdaySection').style.display='none';
+    el('partnerBirthdaySection').style.display='none';
+    el('viewOnlyBirthdaySection').style.display='';
+    el('viewSelfBtnWrap').style.display='';
+    el('viewOnlyBirthdayVal').textContent=p.birthday?new Date(p.birthday).toLocaleDateString('en-GB'):'—';
+  }
   el('profilePanel').classList.remove('hidden');
   requestAnimationFrame(()=>el('profilePanel').classList.add('open'));
 }
@@ -907,6 +944,11 @@ function closeProfilePanel(){
   setTimeout(()=>el('profilePanel').classList.add('hidden'),260);
 }
 el('closeProfile').onclick=closeProfilePanel;
+el('viewSelfBtn').onclick=()=>openProfile(currentUser);
+el('myAvatarBig').onclick=()=>{
+  const p=profiles[profilePanelViewId]||{};
+  if(p.avatar_url) openLightbox(p.avatar_url,false);
+};
 el('saveBirthday').onclick=async()=>{
   const val=el('birthdayInput').value; if(!val) return;
   await sb.from('profiles').update({birthday:val}).eq('id',currentUser);
@@ -920,6 +962,7 @@ el('avatarInput').onchange=async e=>{
   const pub=sb.storage.from(BUCKET).getPublicUrl(path).data;
   await sb.from('profiles').update({avatar_url:pub.publicUrl}).eq('id',currentUser);
   profiles[currentUser].avatar_url=pub.publicUrl;
+  el('myAvatarBig').textContent='';
   el('myAvatarBig').style.backgroundImage=`url(${pub.publicUrl})`;
   if(partnerId) renderTopBar();
 };
