@@ -65,7 +65,7 @@ button:active{transform:scale(.96);}
 .primarybtn{flex:1;padding:11px;border:none;border-radius:12px;font-weight:600;font-size:13px;background:linear-gradient(120deg,var(--rose-gold),var(--soft-purple));color:#100e12;}
 .primarybtn:disabled{opacity:.5;}
 
-#requestBox textarea{width:100%;min-height:80px;padding:12px;border-radius:14px;border:1px solid rgba(201,147,131,.22);background:rgba(255,255,255,.04);color:var(--ink);font-size:14px;font-family:inherit;resize:vertical;outline:none;}
+#requestBox textarea,.mission textarea{width:100%;min-height:70px;padding:12px;border-radius:14px;border:1px solid rgba(201,147,131,.22);background:rgba(255,255,255,.04);color:var(--ink);font-size:14px;font-family:inherit;resize:vertical;outline:none;margin-top:8px;}
 .errtext{color:#ff9eae;font-size:12px;margin-top:6px;}
 .oktext{color:#8fe0a8;font-size:12px;margin-top:6px;}
 
@@ -74,6 +74,7 @@ button:active{transform:scale(.96);}
 .mission .top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .mission .badge{font-size:10px;padding:3px 9px;border-radius:10px;white-space:nowrap;}
 .badge.pending{background:rgba(201,147,131,.2);color:var(--rose-gold);}
+.badge.awaiting_prompt{background:rgba(141,124,156,.22);color:var(--soft-purple);}
 .badge.completed{background:rgba(143,224,168,.18);color:#8fe0a8;}
 .badge.not_completed{background:rgba(255,120,140,.18);color:#ff9eae;}
 .badge.superseded{background:rgba(255,255,255,.08);color:var(--muted);}
@@ -147,13 +148,8 @@ button:active{transform:scale(.96);}
 
     <div id="requestBox" class="card hidden">
       <div class="tag" id="requestTag"></div>
-      <textarea id="requestText" placeholder="Write your question or dare..." maxlength="300"></textarea>
-      <div class="btn-row">
-        <button class="ghostbtn" id="cancelRequestBtn">Cancel</button>
-        <button class="primarybtn" id="sendRequestBtn">Send Request</button>
-      </div>
+      <div class="prompt" id="requestSentText"></div>
       <div class="errtext hidden" id="requestErr"></div>
-      <div class="oktext hidden" id="requestOk">Request sent 💌</div>
     </div>
 
     <div class="section-title">🎯 Active Missions</div>
@@ -362,50 +358,38 @@ el('drawAnotherBtn').onclick=async()=>{
   logEvent('game_bot_prompt', prompt);
 };
 
-/* ===================== request to partner ===================== */
-el('subRequest').onclick=()=>{
-  if(!selectedType) return;
-  el('botResult').classList.add('hidden');
-  el('requestBox').classList.remove('hidden');
-  el('requestTag').textContent = `Request a ${selectedType==='truth'?'Truth':'Dare'} from ${USERS[partnerId].name} ${selectedType==='truth'?'💌':'🔥'}`;
-  el('requestErr').classList.add('hidden');
-  el('requestOk').classList.add('hidden');
-  el('requestText').focus();
-};
-el('cancelRequestBtn').onclick=()=>{
-  el('requestBox').classList.add('hidden');
-  el('requestText').value='';
-};
+/* ===================== request to partner =====================
+   The person who clicks "Request to X" never types anything — they are
+   challenging their partner to share a Truth or do a Dare. The partner
+   is the one who writes what they actually share, as their own response. */
 let sendingRequest=false;
-el('sendRequestBtn').onclick=async()=>{
-  if(sendingRequest) return;
-  const text=el('requestText').value.trim();
+el('subRequest').onclick=async()=>{
+  if(!selectedType || sendingRequest) return;
+  el('botResult').classList.add('hidden');
   el('requestErr').classList.add('hidden');
-  el('requestOk').classList.add('hidden');
-  if(!text){ el('requestErr').textContent='Please write something first.'; el('requestErr').classList.remove('hidden'); return; }
-  if(!selectedType) return;
   sendingRequest=true;
-  const btn=el('sendRequestBtn');
-  const originalLabel=btn.textContent;
+  const btn=el('subRequest');
+  const originalLabel=btn.innerHTML;
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Sending...';
+  const label = selectedType==='truth'?'Truth':'Dare';
   try{
     const res = await sb.from('game_missions').insert({
       type:selectedType, source:'request', initiator_id:currentUser, assignee_id:partnerId,
-      prompt:text, status:'pending'
+      prompt:'', status:'awaiting_prompt'
     }).select().single();
     if(res.error || !res.data) throw new Error(res.error ? res.error.message : 'Unknown error');
-    const label = selectedType==='truth'?'Truth':'Dare';
-    await postChatEvent(`${USERS[currentUser].name} sends ${USERS[partnerId].name} a ${label} request: "${text}"`);
-    logEvent('game_request', text);
-    el('requestOk').classList.remove('hidden');
-    el('requestText').value='';
+    await postChatEvent(`${USERS[currentUser].name} sends ${USERS[partnerId].name} a ${label} request.`);
+    logEvent('game_request', selectedType);
+    el('requestBox').classList.remove('hidden');
+    el('requestTag').textContent = `${label} request sent 💌`;
+    el('requestSentText').textContent = `Waiting for ${USERS[partnerId].name}'s response...`;
   }catch(err){
     console.warn('request send failed:',err);
     el('requestErr').textContent='Could not send — check your connection and try again.';
     el('requestErr').classList.remove('hidden');
   }finally{
     sendingRequest=false;
-    btn.disabled=false; btn.textContent=originalLabel;
+    btn.disabled=false; btn.innerHTML=originalLabel;
   }
 };
 
@@ -418,23 +402,38 @@ async function loadMissions(){
 }
 function renderActiveMissions(){
   const wrap=el('activeMissions'); wrap.innerHTML='';
-  const pending = missions.filter(m=>m.status==='pending');
-  el('emptyMissions').classList.toggle('hidden', pending.length>0);
-  pending.forEach(m=>wrap.appendChild(renderMissionCard(m,true)));
+  const active = missions.filter(m=>m.status==='pending'||m.status==='awaiting_prompt');
+  el('emptyMissions').classList.toggle('hidden', active.length>0);
+  active.forEach(m=>wrap.appendChild(renderMissionCard(m,true)));
 }
 function renderMissionCard(m, active){
   const div=document.createElement('div');
   div.className='mission';
   div.dataset.id=m.id;
-  const statusLabel = {pending:'Pending',completed:'Confirmed Completed',not_completed:'Confirmed Not Completed',superseded:'Superseded'}[m.status]||m.status;
+  const statusLabel = {awaiting_prompt:'Awaiting Response',pending:'Pending',completed:'Confirmed Completed',not_completed:'Confirmed Not Completed',superseded:'Superseded'}[m.status]||m.status;
+  const promptLine = m.status==='awaiting_prompt'
+    ? `<div class="text" style="font-style:italic;color:var(--muted);">No response yet</div>`
+    : `<div class="text">"${escapeHtml(m.prompt)}"</div>`;
   let inner = `
     <div class="top">
       <div class="who">${m.type==='truth'?'💜':'🔥'} ${USERS[m.assignee_id]?USERS[m.assignee_id].name:m.assignee_id} · ${m.type==='truth'?'Truth':'Dare'} · ${m.source==='bot'?'Bot Selection':'Request'}</div>
       <div class="badge ${m.status}">${statusLabel}</div>
     </div>
-    <div class="text">"${escapeHtml(m.prompt)}"</div>
+    ${promptLine}
     <div class="who">Assigned by ${USERS[m.initiator_id]?USERS[m.initiator_id].name:m.initiator_id} · ${fmtWhen(m.created_at)}</div>`;
-  if(m.status==='pending' && active){
+
+  if(m.status==='awaiting_prompt' && active){
+    if(currentUser===m.assignee_id){
+      inner += `
+        <textarea class="respText" maxlength="300" placeholder="Write your ${m.type==='truth'?'truth':'dare response'}..."></textarea>
+        <div class="btn-row">
+          <button class="primarybtn respSendBtn">Send Response</button>
+        </div>
+        <div class="errtext hidden respErr"></div>`;
+    } else if(currentUser===m.initiator_id){
+      inner += `<div class="waitnote">💌 Waiting for ${USERS[m.assignee_id].name}'s response...</div>`;
+    }
+  } else if(m.status==='pending' && active){
     if(currentUser===m.initiator_id){
       const name=USERS[m.assignee_id].name;
       inner += `<div class="vbtns">
@@ -445,16 +444,52 @@ function renderMissionCard(m, active){
       inner += `<div class="waitnote">This is your mission — ${USERS[m.initiator_id].name} will confirm once it's done.</div>`;
     }
   }
-  if(m.status!=='pending' && m.verified_by){
+  if((m.status==='completed'||m.status==='not_completed') && m.verified_by){
     inner += `<div class="who">Confirmed by ${USERS[m.verified_by]?USERS[m.verified_by].name:m.verified_by} · ${fmtWhen(m.verified_at)}</div>`;
   }
   div.innerHTML = inner;
+
   if(m.status==='pending' && active && currentUser===m.initiator_id){
     div.querySelectorAll('.vbtn').forEach(btn=>{
       btn.onclick=()=>verifyMission(m, btn.dataset.act, btn);
     });
   }
+  if(m.status==='awaiting_prompt' && active && currentUser===m.assignee_id){
+    const sendBtn=div.querySelector('.respSendBtn');
+    sendBtn.onclick=()=>submitResponse(m, div);
+  }
   return div;
+}
+let sendingResponse=false;
+async function submitResponse(m, cardEl){
+  if(sendingResponse) return;
+  const ta=cardEl.querySelector('.respText');
+  const errEl=cardEl.querySelector('.respErr');
+  const text=ta.value.trim();
+  errEl.classList.add('hidden');
+  if(!text){ errEl.textContent='Please write something first.'; errEl.classList.remove('hidden'); return; }
+  sendingResponse=true;
+  const btn=cardEl.querySelector('.respSendBtn');
+  const originalLabel=btn.textContent;
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Sending...';
+  try{
+    const res = await sb.from('game_missions')
+      .update({prompt:text, status:'pending'})
+      .eq('id',m.id).eq('status','awaiting_prompt')
+      .select();
+    if(!res.data || res.data.length===0) throw new Error(res.error ? res.error.message : 'This request is no longer awaiting a response.');
+    await postChatEvent(`${USERS[currentUser].name} responds: "${text}"`);
+    logEvent('game_response', text);
+    loadMissions();
+  }catch(err){
+    console.warn('response send failed:',err);
+    errEl.textContent='Could not send — check your connection and try again.';
+    errEl.classList.remove('hidden');
+    btn.disabled=false; btn.textContent=originalLabel;
+    sendingResponse=false;
+    return;
+  }
+  sendingResponse=false;
 }
 async function verifyMission(m, result, btnEl){
   const row = btnEl.closest('.mission');
@@ -464,7 +499,7 @@ async function verifyMission(m, result, btnEl){
     .eq('id',m.id).eq('status','pending')
     .select();
   if(!res.data || res.data.length===0){
-    alert('This mission was already verified by someone else.');
+    alert('This mission was already verified, or could not be updated. Refreshing...');
     loadMissions();
     return;
   }
@@ -488,17 +523,18 @@ function renderLog(){
   let list = missions.slice();
   if(activeFilter==='truth') list=list.filter(m=>m.type==='truth');
   else if(activeFilter==='dare') list=list.filter(m=>m.type==='dare');
-  else if(activeFilter==='pending') list=list.filter(m=>m.status==='pending');
+  else if(activeFilter==='pending') list=list.filter(m=>m.status==='pending'||m.status==='awaiting_prompt');
   else if(activeFilter==='completed') list=list.filter(m=>m.status==='completed');
   else if(activeFilter==='not_completed') list=list.filter(m=>m.status==='not_completed');
   el('emptyLog').classList.toggle('hidden', list.length>0);
   list.forEach(m=>{
     const row=document.createElement('div');
     row.className='logrow';
-    const statusLabel={pending:'⏳ Pending',completed:'✅ Confirmed Completed',not_completed:'❌ Confirmed Not Completed',superseded:'↻ Superseded'}[m.status]||m.status;
+    const statusLabel={awaiting_prompt:'💌 Awaiting Response',pending:'⏳ Pending',completed:'✅ Confirmed Completed',not_completed:'❌ Confirmed Not Completed',superseded:'↻ Superseded'}[m.status]||m.status;
+    const promptLine = m.prompt ? `"${escapeHtml(m.prompt)}"` : '<span style="color:var(--muted);font-style:italic;">no response yet</span>';
     row.innerHTML = `
       <div><b>${USERS[m.initiator_id]?USERS[m.initiator_id].name:m.initiator_id}</b> → <b>${USERS[m.assignee_id]?USERS[m.assignee_id].name:m.assignee_id}</b> · ${m.type==='truth'?'💜 Truth':'🔥 Dare'} · ${m.source==='bot'?'Bot Selection':'Request'}</div>
-      <div style="margin-top:4px;">"${escapeHtml(m.prompt)}"</div>
+      <div style="margin-top:4px;">${promptLine}</div>
       <div class="lmeta">${statusLabel} · created ${fmtWhen(m.created_at)}${m.verified_by?(' · verified by '+(USERS[m.verified_by]?USERS[m.verified_by].name:m.verified_by)+' at '+fmtWhen(m.verified_at)):''}</div>`;
     wrap.appendChild(row);
   });
