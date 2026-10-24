@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Truth or Dare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --deep-purple:#141318;--soft-purple:#8d7c9c;--rose-gold:#c99383;--soft-pink:#d9b8ab;
+  --ink:#f3eef0;--muted:#a79fa9;--card-bg:#151317;--glow:0 0 22px rgba(201,147,131,.14);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{min-height:100%;margin:0;font-family:'Quicksand',sans-serif;color:var(--ink);}
+body{
+  background:radial-gradient(120% 70% at 50% -10%, rgba(201,147,131,.09), transparent 60%),
+             radial-gradient(90% 60% at 100% 100%, rgba(141,124,156,.08), transparent 60%),
+             linear-gradient(160deg,#0d0b10,#08070a 55%,#020202);
+  min-height:100vh;display:flex;flex-direction:column;
+}
+.hidden{display:none !important;}
+button{font-family:inherit;cursor:pointer;transition:transform .12s ease;}
+button:active{transform:scale(.96);}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }
+
+/* gate */
+#gate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px 20px;}
+.gate-title{font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:var(--rose-gold);}
+#gateUsers{display:flex;gap:16px;}
+.gate-card{background:var(--card-bg);border:1px solid rgba(201,147,131,.18);border-radius:20px;padding:18px;text-align:center;cursor:pointer;box-shadow:var(--glow);}
+.gate-card .em{font-size:36px;}
+#gatePwWrap{display:none;width:100%;max-width:280px;flex-direction:column;gap:10px;}
+#gatePw{padding:13px 16px;border-radius:14px;border:1px solid rgba(201,147,131,.25);background:rgba(255,255,255,.04);color:var(--ink);font-size:16px;text-align:center;outline:none;}
+#gateBtn{padding:12px;border:none;border-radius:14px;font-weight:600;background:linear-gradient(120deg,var(--rose-gold),var(--soft-purple));color:#100e12;}
+#gateErr{color:#ff9eae;font-size:12.5px;min-height:16px;text-align:center;}
+
+/* top bar */
+#topBar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(10,9,12,.92);border-bottom:1px solid rgba(201,147,131,.12);}
+#topBar .whoami{font-size:11.5px;color:var(--muted);}
+#topBar .title{font-family:'Playfair Display',serif;font-style:italic;font-size:17px;color:var(--rose-gold);}
+
+#page{flex:1;max-width:560px;margin:0 auto;width:100%;padding:18px 14px 20px;}
+.hero{text-align:center;margin-bottom:18px;}
+.hero h1{font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:var(--rose-gold);margin:0 0 4px;}
+.hero p{font-size:12.5px;color:var(--muted);margin:0;}
+
+.tdrow{display:flex;gap:12px;margin-bottom:16px;}
+.tdbtn{flex:1;padding:22px 10px;border-radius:22px;border:1px solid rgba(201,147,131,.2);background:var(--card-bg);box-shadow:var(--glow);font-size:16px;font-weight:700;color:var(--ink);}
+.tdbtn.truth{background:linear-gradient(160deg,rgba(141,124,156,.25),var(--card-bg));}
+.tdbtn.dare{background:linear-gradient(160deg,rgba(201,147,131,.25),var(--card-bg));}
+.tdbtn.active{box-shadow:0 0 0 2px var(--rose-gold),var(--glow);}
+
+#subOptions{display:none;gap:10px;margin-bottom:16px;}
+.subbtn{flex:1;padding:14px 8px;border-radius:16px;border:1px solid rgba(201,147,131,.18);background:rgba(255,255,255,.03);color:var(--ink);font-size:13px;}
+
+.card{background:var(--card-bg);border:1px solid rgba(201,147,131,.14);border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:var(--glow);}
+.card .tag{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.card .prompt{font-size:16px;margin:8px 0;line-height:1.4;}
+.card .meta{font-size:11px;color:var(--muted);}
+.card .btn-row{display:flex;gap:8px;margin-top:12px;}
+.ghostbtn{flex:1;padding:10px;border-radius:12px;border:1px solid rgba(201,147,131,.25);background:transparent;color:var(--ink);font-size:12.5px;}
+.primarybtn{flex:1;padding:11px;border:none;border-radius:12px;font-weight:600;font-size:13px;background:linear-gradient(120deg,var(--rose-gold),var(--soft-purple));color:#100e12;}
+.primarybtn:disabled{opacity:.5;}
+
+#requestBox textarea{width:100%;min-height:80px;padding:12px;border-radius:14px;border:1px solid rgba(201,147,131,.22);background:rgba(255,255,255,.04);color:var(--ink);font-size:14px;font-family:inherit;resize:vertical;outline:none;}
+.errtext{color:#ff9eae;font-size:12px;margin-top:6px;}
+.oktext{color:#8fe0a8;font-size:12px;margin-top:6px;}
+
+.section-title{font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--rose-gold);margin:24px 0 10px;}
+.mission{border-radius:16px;background:var(--card-bg);border:1px solid rgba(201,147,131,.14);padding:14px;margin-bottom:10px;}
+.mission .top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.mission .badge{font-size:10px;padding:3px 9px;border-radius:10px;white-space:nowrap;}
+.badge.pending{background:rgba(201,147,131,.2);color:var(--rose-gold);}
+.badge.completed{background:rgba(143,224,168,.18);color:#8fe0a8;}
+.badge.not_completed{background:rgba(255,120,140,.18);color:#ff9eae;}
+.badge.superseded{background:rgba(255,255,255,.08);color:var(--muted);}
+.mission .who{font-size:12px;color:var(--muted);}
+.mission .text{font-size:14.5px;margin:8px 0;}
+.mission .vbtns{display:flex;gap:8px;margin-top:10px;}
+.vbtn{flex:1;padding:10px;border-radius:12px;border:none;font-size:12.5px;font-weight:600;}
+.vbtn.yes{background:linear-gradient(120deg,#8fe0a8,#6bb98a);color:#0d1f12;}
+.vbtn.no{background:linear-gradient(120deg,#ff9eae,#d9627a);color:#2a0d12;}
+.waitnote{font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;}
+
+#filters{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;}
+.filterchip{flex:0 0 auto;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(201,147,131,.16);font-size:11.5px;color:var(--ink);}
+.filterchip.active{background:linear-gradient(120deg,var(--soft-purple),var(--rose-gold));color:#100e12;}
+
+#logList{display:flex;flex-direction:column;gap:8px;}
+.logrow{background:var(--card-bg);border:1px solid rgba(201,147,131,.1);border-radius:14px;padding:11px 13px;font-size:12.5px;}
+.logrow .lmeta{color:var(--muted);font-size:10.5px;margin-top:5px;}
+#emptyMissions,#emptyLog{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 0;}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#100e12;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+#bottomNav{display:flex;background:rgba(8,7,10,.96);border-top:1px solid rgba(196,150,140,.14);padding-bottom:env(safe-area-inset-bottom,0px);}
+#bottomNav .navtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 7px;background:none;border:none;color:var(--muted);font-size:10.5px;}
+#bottomNav .navtab .nic{font-size:18px;}
+#bottomNav .navtab.active{color:var(--rose-gold);}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-title">Who's playing? 💜</div>
+  <div id="gateUsers"></div>
+  <div id="gatePwWrap">
+    <input type="password" id="gatePw" placeholder="Password" autocomplete="off">
+    <button id="gateBtn">Continue</button>
+  </div>
+  <div id="gateErr"></div>
+</div>
+
+<div id="app" class="hidden" style="display:flex;flex-direction:column;flex:1;">
+  <div id="topBar">
+    <div class="title">💜 Truth or Dare</div>
+    <div class="whoami" id="whoami"></div>
+  </div>
+
+  <div id="page">
+    <div class="hero">
+      <h1>Choose your mission. Make memories.</h1>
+      <p>Let's see what fate has for you two!</p>
+    </div>
+
+    <div class="tdrow">
+      <button class="tdbtn truth" id="pickTruth">💜 TRUTH</button>
+      <button class="tdbtn dare" id="pickDare">🔥 DARE</button>
+    </div>
+
+    <div id="subOptions">
+      <button class="subbtn" id="subBot">🎲 Bot Selection</button>
+      <button class="subbtn" id="subRequest">💌 Request to <span id="partnerNameLabel"></span></button>
+    </div>
+
+    <div id="botResult" class="card hidden">
+      <div class="tag">Bot Selection</div>
+      <div class="prompt" id="botPromptText"></div>
+      <div class="meta" id="botMetaText"></div>
+      <div class="btn-row">
+        <button class="ghostbtn" id="drawAnotherBtn">🎲 Draw Another</button>
+      </div>
+    </div>
+
+    <div id="requestBox" class="card hidden">
+      <div class="tag" id="requestTag"></div>
+      <textarea id="requestText" placeholder="Write your question or dare..." maxlength="300"></textarea>
+      <div class="btn-row">
+        <button class="ghostbtn" id="cancelRequestBtn">Cancel</button>
+        <button class="primarybtn" id="sendRequestBtn">Send Request</button>
+      </div>
+      <div class="errtext hidden" id="requestErr"></div>
+      <div class="oktext hidden" id="requestOk">Request sent 💌</div>
+    </div>
+
+    <div class="section-title">🎯 Active Missions</div>
+    <div id="activeMissions"></div>
+    <div id="emptyMissions" class="hidden">No pending missions right now — pick Truth or Dare above!</div>
+
+    <div class="section-title">📜 OUR GAME HISTORY</div>
+    <div id="filters">
+      <button class="filterchip active" data-f="all">All</button>
+      <button class="filterchip" data-f="truth">Truth</button>
+      <button class="filterchip" data-f="dare">Dare</button>
+      <button class="filterchip" data-f="pending">Pending</button>
+      <button class="filterchip" data-f="completed">Completed</button>
+      <button class="filterchip" data-f="not_completed">Not Completed</button>
+    </div>
+    <div id="logList"></div>
+    <div id="emptyLog" class="hidden">No game history yet.</div>
+  </div>
+
+  <div id="bottomNav">
+    <button class="navtab" type="button" onclick="location.href='index.html'"><span class="nic">💬</span>Messages</button>
+    <button class="navtab active" type="button"><span class="nic">🎮</span>Truth or Dare</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://lzagntpccmvyirvtzwst.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nra8AJ_mOx22lxLj4MpvDw_Zi7ExCnU";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const USERS = {
+  irfu: { id:"irfu", emoji:"🧸", name:"Irfan", password:"irfu" },
+  rifu: { id:"rifu", emoji:"👰🏻‍♀️", name:"Rifana", password:"2012" }
+};
+let currentUser=null, partnerId=null;
+let selectedType=null; // 'truth' | 'dare'
+let activeFilter='all';
+let lastBotPrompt=null;
+let pendingMissionFromBot=null; // the mission created by the most recent (unverified) Bot Selection in this session
+let missions=[]; // local cache of all missions, newest first
+
+function el(id){ return document.getElementById(id); }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function fmtWhen(ts){ return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+
+const TRUTHS=[
+  "What is one thing that always makes you smile?",
+  "What's your favorite memory of us so far?",
+  "What's a small habit of mine you secretly love?",
+  "What song reminds you of me?",
+  "What's one thing you're grateful for today?",
+  "What's your idea of a perfect lazy day together?",
+  "What's something you've never told me but want to?",
+  "What made you smile today before this?",
+  "What's one dream you haven't shared with me yet?",
+  "What's your favorite thing about our conversations?",
+  "What's a place you'd love for us to visit someday?",
+  "What's one thing that instantly makes your day better?",
+  "What's your favorite way to be comforted when you're upset?",
+  "What's a silly thing that makes you laugh every time?",
+  "What's one thing you admire about yourself?",
+  "What's your favorite memory from childhood?",
+  "What's something you're proud of this week?",
+  "What's a compliment you'd love to hear more often?",
+  "What's your go-to comfort food?",
+  "What's one thing you'd like us to do more of together?"
+];
+const DARES=[
+  "Send a cute emoji that describes your mood right now.",
+  "Send a voice note saying something sweet.",
+  "Describe your mood using three emojis.",
+  "Send a photo of something that made you happy today.",
+  "Write a tiny two-line poem for your partner.",
+  "Send a funny selfie pose description.",
+  "Compliment your partner in the chat right now.",
+  "Set your mood status to something playful for the next hour.",
+  "Share one thing you're looking forward to this week.",
+  "Send a voice note singing a line of your favorite song.",
+  "Describe your partner in exactly five words.",
+  "Send a sticker that matches how you feel right now.",
+  "Share your current wallpaper and why you picked it.",
+  "Type out a cheesy pickup line.",
+  "Send a message using only emojis for one full sentence.",
+  "Share the last photo in your gallery (if appropriate!).",
+  "Give your partner a nickname they've never heard before.",
+  "Send a 10 second voice note of you laughing.",
+  "Write one thing you appreciate about today.",
+  "Share a fun fact about yourself your partner might not know."
+];
+
+function pickRandom(list, avoid){
+  let pool = list;
+  if(avoid && list.length>1) pool = list.filter(x=>x!==avoid);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+/* ===================== session / gate ===================== */
+function renderGateUsers(){
+  const wrap=el('gateUsers'); wrap.innerHTML='';
+  Object.values(USERS).forEach(u=>{
+    const card=document.createElement('div');
+    card.className='gate-card';
+    card.innerHTML=`<div class="em">${u.emoji}</div>`;
+    card.onclick=()=>{
+      currentUser=u.id;
+      el('gatePwWrap').style.display='flex';
+      el('gatePw').value=''; el('gateErr').textContent='';
+      el('gatePw').focus();
+    };
+    wrap.appendChild(card);
+  });
+}
+el('gateBtn').onclick=tryGateLogin;
+el('gatePw').addEventListener('keydown',e=>{ if(e.key==='Enter') tryGateLogin(); });
+function tryGateLogin(){
+  if(!currentUser) return;
+  if(el('gatePw').value===USERS[currentUser].password){
+    try{ sessionStorage.setItem('ever_after_user',currentUser); }catch(err){}
+    boot();
+  } else {
+    el('gateErr').textContent='Incorrect password.';
+  }
+}
+
+function boot(){
+  partnerId = Object.keys(USERS).filter(u=>u!==currentUser)[0];
+  el('gate').classList.add('hidden');
+  el('app').classList.remove('hidden');
+  el('whoami').textContent = `${USERS[currentUser].emoji} Logged in as ${USERS[currentUser].name}`;
+  el('partnerNameLabel').textContent = USERS[partnerId].name;
+  el('requestTag').textContent = `Request to ${USERS[partnerId].name}`;
+  loadMissions();
+  subscribeRealtime();
+}
+
+/* ===================== chat + log writers ===================== */
+async function postChatEvent(text){
+  try{
+    await sb.from('messages').insert({sender_id:currentUser,receiver_id:partnerId,type:'game',content:text});
+  }catch(err){ console.warn('chat log failed:',err); }
+}
+function logEvent(eventType, detail){
+  sb.from('activity_log').insert({
+    actor_id:currentUser, event_type:eventType, detail:detail||null
+  }).then(res=>{ if(res&&res.error) console.warn('log failed:',res.error); });
+}
+
+/* ===================== mode selection ===================== */
+el('pickTruth').onclick=()=>selectType('truth');
+el('pickDare').onclick=()=>selectType('dare');
+function selectType(type){
+  selectedType=type;
+  el('pickTruth').classList.toggle('active',type==='truth');
+  el('pickDare').classList.toggle('active',type==='dare');
+  el('subOptions').style.display='flex';
+  el('botResult').classList.add('hidden');
+  el('requestBox').classList.add('hidden');
+  const label = type==='truth'?'Truth':'Dare';
+  postChatEvent(`${USERS[currentUser].name} clicks ${label}.`);
+  logEvent('game_click', type);
+}
+
+/* ===================== bot selection ===================== */
+el('subBot').onclick=async()=>{
+  if(!selectedType) return;
+  el('requestBox').classList.add('hidden');
+  const pool = selectedType==='truth'?TRUTHS:DARES;
+  const prompt = pickRandom(pool, lastBotPrompt);
+  lastBotPrompt = prompt;
+  const label = selectedType==='truth'?'Truth':'Dare';
+  postChatEvent(`${USERS[currentUser].name} clicks Bot Selection.`);
+  logEvent('game_bot_select', selectedType);
+  const res = await sb.from('game_missions').insert({
+    type:selectedType, source:'bot', initiator_id:currentUser, assignee_id:partnerId,
+    prompt, status:'pending'
+  }).select().single();
+  if(res.error || !res.data){ alert('Could not create mission — check your connection and try again.'); return; }
+  pendingMissionFromBot = res.data;
+  renderBotResult(res.data);
+  await postChatEvent(`Bot says: "${prompt}"`);
+  logEvent('game_bot_prompt', prompt);
+};
+function renderBotResult(mission){
+  el('botResult').classList.remove('hidden');
+  el('botPromptText').textContent = mission.prompt;
+  el('botMetaText').textContent = `${mission.type==='truth'?'Truth':'Dare'} · Bot Selection · for ${USERS[mission.assignee_id].name}`;
+}
+el('drawAnotherBtn').onclick=async()=>{
+  if(!pendingMissionFromBot) return;
+  const label = selectedType==='truth'?'Truth':'Dare';
+  postChatEvent(`${USERS[currentUser].name} draws another ${label}.`);
+  logEvent('game_redraw', selectedType);
+  /* supersede the previous un-verified bot mission so it doesn't linger as a duplicate pending task */
+  await sb.from('game_missions').update({status:'superseded'}).eq('id',pendingMissionFromBot.id).eq('status','pending');
+  const pool = selectedType==='truth'?TRUTHS:DARES;
+  const prompt = pickRandom(pool, lastBotPrompt);
+  lastBotPrompt = prompt;
+  const res = await sb.from('game_missions').insert({
+    type:selectedType, source:'bot', initiator_id:currentUser, assignee_id:partnerId,
+    prompt, status:'pending'
+  }).select().single();
+  if(res.error || !res.data){ alert('Could not draw another — try again.'); return; }
+  pendingMissionFromBot = res.data;
+  renderBotResult(res.data);
+  await postChatEvent(`Bot says: "${prompt}"`);
+  logEvent('game_bot_prompt', prompt);
+};
+
+/* ===================== request to partner ===================== */
+el('subRequest').onclick=()=>{
+  if(!selectedType) return;
+  el('botResult').classList.add('hidden');
+  el('requestBox').classList.remove('hidden');
+  el('requestTag').textContent = `Request a ${selectedType==='truth'?'Truth':'Dare'} from ${USERS[partnerId].name} ${selectedType==='truth'?'💌':'🔥'}`;
+  el('requestErr').classList.add('hidden');
+  el('requestOk').classList.add('hidden');
+  el('requestText').focus();
+};
+el('cancelRequestBtn').onclick=()=>{
+  el('requestBox').classList.add('hidden');
+  el('requestText').value='';
+};
+let sendingRequest=false;
+el('sendRequestBtn').onclick=async()=>{
+  if(sendingRequest) return;
+  const text=el('requestText').value.trim();
+  el('requestErr').classList.add('hidden');
+  el('requestOk').classList.add('hidden');
+  if(!text){ el('requestErr').textContent='Please write something first.'; el('requestErr').classList.remove('hidden'); return; }
+  if(!selectedType) return;
+  sendingRequest=true;
+  const btn=el('sendRequestBtn');
+  const originalLabel=btn.textContent;
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Sending...';
+  try{
+    const res = await sb.from('game_missions').insert({
+      type:selectedType, source:'request', initiator_id:currentUser, assignee_id:partnerId,
+      prompt:text, status:'pending'
+    }).select().single();
+    if(res.error || !res.data) throw new Error(res.error ? res.error.message : 'Unknown error');
+    const label = selectedType==='truth'?'Truth':'Dare';
+    await postChatEvent(`${USERS[currentUser].name} sends ${USERS[partnerId].name} a ${label} request: "${text}"`);
+    logEvent('game_request', text);
+    el('requestOk').classList.remove('hidden');
+    el('requestText').value='';
+  }catch(err){
+    console.warn('request send failed:',err);
+    el('requestErr').textContent='Could not send — check your connection and try again.';
+    el('requestErr').classList.remove('hidden');
+  }finally{
+    sendingRequest=false;
+    btn.disabled=false; btn.textContent=originalLabel;
+  }
+};
+
+/* ===================== missions: load, render, verify ===================== */
+async function loadMissions(){
+  const res = await sb.from('game_missions').select('*').order('created_at',{ascending:false}).limit(200);
+  missions = res.data || [];
+  renderActiveMissions();
+  renderLog();
+}
+function renderActiveMissions(){
+  const wrap=el('activeMissions'); wrap.innerHTML='';
+  const pending = missions.filter(m=>m.status==='pending');
+  el('emptyMissions').classList.toggle('hidden', pending.length>0);
+  pending.forEach(m=>wrap.appendChild(renderMissionCard(m,true)));
+}
+function renderMissionCard(m, active){
+  const div=document.createElement('div');
+  div.className='mission';
+  div.dataset.id=m.id;
+  const statusLabel = {pending:'Pending',completed:'Confirmed Completed',not_completed:'Confirmed Not Completed',superseded:'Superseded'}[m.status]||m.status;
+  let inner = `
+    <div class="top">
+      <div class="who">${m.type==='truth'?'💜':'🔥'} ${USERS[m.assignee_id]?USERS[m.assignee_id].name:m.assignee_id} · ${m.type==='truth'?'Truth':'Dare'} · ${m.source==='bot'?'Bot Selection':'Request'}</div>
+      <div class="badge ${m.status}">${statusLabel}</div>
+    </div>
+    <div class="text">"${escapeHtml(m.prompt)}"</div>
+    <div class="who">Assigned by ${USERS[m.initiator_id]?USERS[m.initiator_id].name:m.initiator_id} · ${fmtWhen(m.created_at)}</div>`;
+  if(m.status==='pending' && active){
+    if(currentUser===m.initiator_id){
+      const name=USERS[m.assignee_id].name;
+      inner += `<div class="vbtns">
+        <button class="vbtn yes" data-act="completed">✅ ${name} completed this mission</button>
+        <button class="vbtn no" data-act="not_completed">❌ ${name} did not complete this mission</button>
+      </div>`;
+    } else if(currentUser===m.assignee_id){
+      inner += `<div class="waitnote">This is your mission — ${USERS[m.initiator_id].name} will confirm once it's done.</div>`;
+    }
+  }
+  if(m.status!=='pending' && m.verified_by){
+    inner += `<div class="who">Confirmed by ${USERS[m.verified_by]?USERS[m.verified_by].name:m.verified_by} · ${fmtWhen(m.verified_at)}</div>`;
+  }
+  div.innerHTML = inner;
+  if(m.status==='pending' && active && currentUser===m.initiator_id){
+    div.querySelectorAll('.vbtn').forEach(btn=>{
+      btn.onclick=()=>verifyMission(m, btn.dataset.act, btn);
+    });
+  }
+  return div;
+}
+async function verifyMission(m, result, btnEl){
+  const row = btnEl.closest('.mission');
+  row.querySelectorAll('.vbtn').forEach(b=>b.disabled=true);
+  const res = await sb.from('game_missions')
+    .update({status:result, verified_by:currentUser, verified_at:new Date().toISOString()})
+    .eq('id',m.id).eq('status','pending')
+    .select();
+  if(!res.data || res.data.length===0){
+    alert('This mission was already verified by someone else.');
+    loadMissions();
+    return;
+  }
+  const verb = result==='completed' ? 'completed' : 'did not complete';
+  await postChatEvent(`${USERS[currentUser].name} confirmed that ${USERS[m.assignee_id].name} ${verb} the mission.`);
+  logEvent('game_verify', `${m.id}:${result}`);
+  loadMissions();
+}
+
+/* ===================== permanent log ===================== */
+document.querySelectorAll('.filterchip').forEach(chip=>{
+  chip.onclick=()=>{
+    document.querySelectorAll('.filterchip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter=chip.dataset.f;
+    renderLog();
+  };
+});
+function renderLog(){
+  const wrap=el('logList'); wrap.innerHTML='';
+  let list = missions.slice();
+  if(activeFilter==='truth') list=list.filter(m=>m.type==='truth');
+  else if(activeFilter==='dare') list=list.filter(m=>m.type==='dare');
+  else if(activeFilter==='pending') list=list.filter(m=>m.status==='pending');
+  else if(activeFilter==='completed') list=list.filter(m=>m.status==='completed');
+  else if(activeFilter==='not_completed') list=list.filter(m=>m.status==='not_completed');
+  el('emptyLog').classList.toggle('hidden', list.length>0);
+  list.forEach(m=>{
+    const row=document.createElement('div');
+    row.className='logrow';
+    const statusLabel={pending:'⏳ Pending',completed:'✅ Confirmed Completed',not_completed:'❌ Confirmed Not Completed',superseded:'↻ Superseded'}[m.status]||m.status;
+    row.innerHTML = `
+      <div><b>${USERS[m.initiator_id]?USERS[m.initiator_id].name:m.initiator_id}</b> → <b>${USERS[m.assignee_id]?USERS[m.assignee_id].name:m.assignee_id}</b> · ${m.type==='truth'?'💜 Truth':'🔥 Dare'} · ${m.source==='bot'?'Bot Selection':'Request'}</div>
+      <div style="margin-top:4px;">"${escapeHtml(m.prompt)}"</div>
+      <div class="lmeta">${statusLabel} · created ${fmtWhen(m.created_at)}${m.verified_by?(' · verified by '+(USERS[m.verified_by]?USERS[m.verified_by].name:m.verified_by)+' at '+fmtWhen(m.verified_at)):''}</div>`;
+    wrap.appendChild(row);
+  });
+}
+
+/* ===================== realtime ===================== */
+function subscribeRealtime(){
+  sb.channel('game-missions-live')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'game_missions'},payload=>{
+      if(!missions.find(m=>m.id===payload.new.id)){ missions.unshift(payload.new); renderActiveMissions(); renderLog(); }
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_missions'},payload=>{
+      const idx=missions.findIndex(m=>m.id===payload.new.id);
+      if(idx>-1) missions[idx]=payload.new; else missions.unshift(payload.new);
+      renderActiveMissions(); renderLog();
+    })
+    .subscribe();
+}
+
+/* ===================== boot ===================== */
+renderGateUsers();
+let savedUser=null;
+try{ savedUser=sessionStorage.getItem('ever_after_user'); }catch(err){}
+if(savedUser && USERS[savedUser]){
+  currentUser=savedUser;
+  boot();
+}
+</script>
+</body>
+</html>
