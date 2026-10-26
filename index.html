@@ -75,6 +75,20 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 .msgrow.them .bubble{background:var(--card-bg);border:1px solid rgba(196,150,140,.08);border-bottom-left-radius:4px;}
 .bubble.action{align-self:center;background:rgba(196,150,140,.14);font-style:italic;font-size:12.5px;}
 .bubble.game-event{background:rgba(141,124,156,.18);border:1px solid rgba(141,124,156,.25);}
+.quote-ref{background:rgba(0,0,0,.18);border-left:3px solid var(--rose-gold);border-radius:8px;padding:5px 9px;margin-bottom:6px;cursor:pointer;}
+.msgrow.me .quote-ref{background:rgba(0,0,0,.14);}
+.quote-ref .qname{font-size:11px;font-weight:600;color:var(--rose-gold);}
+.quote-ref .qtext{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+.msgrow.highlight-flash .bubble{box-shadow:0 0 0 2px var(--rose-gold);}
+.msg-action-menu{position:fixed;z-index:70;background:var(--card-bg,#151317);border:1px solid rgba(201,147,131,.25);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;}
+.msg-action-menu button{display:block;width:100%;padding:11px 18px;background:none;border:none;color:var(--ink);font-size:13.5px;font-family:inherit;text-align:left;cursor:pointer;}
+.msg-action-menu button:active{background:rgba(255,255,255,.08);}
+#replyPreviewBar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(196,150,140,.12);}
+#replyPreviewBar .rpb-bar{width:3px;align-self:stretch;background:var(--rose-gold);border-radius:2px;flex:0 0 auto;}
+#replyPreviewBar .rpb-body{flex:1;min-width:0;}
+#replyPreviewBar .rpb-name{font-size:11.5px;font-weight:600;color:var(--rose-gold);}
+#replyPreviewBar .rpb-text{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#replyPreviewBar button{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;}
 .bubble.pending{opacity:.65;font-style:italic;}
 
 /* ---- micro-animations: heart delivery, received glow, double-tap reaction, typing dots ---- */
@@ -121,8 +135,8 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
 
 #inputArea{position:relative;z-index:2;background:rgba(10,9,12,.92);border-top:1px solid rgba(196,150,140,.12);}
 #bottomNav{position:relative;z-index:2;display:flex;background:rgba(8,7,10,.96);border-top:1px solid rgba(196,150,140,.14);padding-bottom:env(safe-area-inset-bottom,0px);}
-#bottomNav .navtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 7px;background:none;border:none;color:var(--muted);font-size:10.5px;font-family:inherit;cursor:pointer;}
-#bottomNav .navtab .nic{font-size:18px;}
+#bottomNav .navtab{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:5px 0;background:none;border:none;color:var(--muted);font-size:10.5px;font-family:inherit;cursor:pointer;}
+#bottomNav .navtab .nic{font-size:13px;}
 #bottomNav .navtab.active{color:var(--rose-gold);}
 #inputRow{display:flex;align-items:center;gap:7px;padding:8px 12px;}
 #selfBtn,#micBtn,#attachBtn,#sendBtn{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:var(--ink);font-size:19px;cursor:pointer;}
@@ -228,6 +242,14 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
     <button class="x" id="cancelRec">✕</button>
   </div>
   <div id="inputArea">
+    <div id="replyPreviewBar" class="hidden">
+      <div class="rpb-bar"></div>
+      <div class="rpb-body">
+        <div class="rpb-name" id="replyPreviewName"></div>
+        <div class="rpb-text" id="replyPreviewText"></div>
+      </div>
+      <button type="button" id="cancelReplyBtn">✕</button>
+    </div>
     <div id="inputRow">
       <button id="selfBtn"></button>
       <button id="attachBtn">📎</button>
@@ -238,7 +260,7 @@ button.ghost{padding:13px 18px;border-radius:18px;border:1px solid rgba(196,150,
   </div>
   <div id="bottomNav">
     <button class="navtab active" type="button"><span class="nic">💬</span>Messages</button>
-    <button class="navtab" type="button" onclick="location.href='t&amp;dgame.html'"><span class="nic">🎮</span>Truth or Dare</button>
+    <button class="navtab" type="button" onclick="location.href='our-little-world.html'"><span class="nic">🌱</span>Our Little World</button>
   </div>
 </div>
 
@@ -370,6 +392,8 @@ const USERS = {
 };
 let currentUser=null, partnerId=null, profiles={};
 let typingTimeout=null;
+const messageCache=new Map(); /* id -> message row, used to resolve reply previews without extra DB calls */
+let replyingTo=null; /* {id, sender_id, previewText} */
 
 /* ===================== permanent activity log =====================
    Writes a row to activity_log, which has no update/delete policy —
@@ -591,17 +615,29 @@ el('textInput').addEventListener('input', ()=>{
 
 /* ===================== messages ===================== */
 async function loadMessages(){
-  const res = await sb.from('messages').select('id,sender_id,receiver_id,type,content,media_url,created_at,seen,seen_at')
+  const res = await sb.from('messages').select('id,sender_id,receiver_id,type,content,media_url,created_at,seen,seen_at,reply_to_message_id')
     .or(`and(sender_id.eq.${currentUser},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${currentUser})`)
     .order('created_at',{ascending:true}).limit(300);
   const wrap=el('messages'); wrap.innerHTML='';
   let lastDay=null;
   (res.data||[]).forEach(m=>{
+    messageCache.set(m.id,m);
     const day=new Date(m.created_at).toDateString();
     if(day!==lastDay){ addDaySep(m.created_at); lastDay=day; }
     renderMessage(m);
   });
   wrap.scrollTop=wrap.scrollHeight;
+}
+function previewTextFor(m){
+  if(!m) return '';
+  if(m.type==='text') return m.content;
+  if(m.type==='sticker') return m.content+' Sticker';
+  if(m.type==='image') return '📷 Photo';
+  if(m.type==='video') return '🎥 Video';
+  if(m.type==='voice') return '🎤 Voice message';
+  if(m.type==='location') return '📍 Location';
+  if(m.type==='action') return (m.content==='kiss'?'💋 Kiss':m.content==='hug'?'🤗 Hug':'👋 Slap');
+  return 'Message';
 }
 function dayNumFor(ts){ return Math.floor((new Date(ts)-START_DATE)/86400000)+1; }
 function addDaySep(ts){
@@ -614,13 +650,16 @@ function addDaySep(ts){
 function renderMessage(m){
   const wrap=el('messages');
   const mine = m.sender_id===currentUser;
+  messageCache.set(m.id,m);
   if(m.type==='action'){
     const div=document.createElement('div');
     div.className='bubble action'; div.dataset.id=m.id;
+    const PRONOUN={irfu:{subj:'He',obj:'him'},rifu:{subj:'She',obj:'her'}};
+    const senderP=PRONOUN[m.sender_id]||PRONOUN.irfu, recipientP=PRONOUN[m.receiver_id]||PRONOUN.rifu;
     const labels={
-      kiss: mine?'You kissed her 💋':'He kissed you 💋',
-      hug: mine?'You hugged her 🤗':'He hugged you 🤗',
-      slap: mine?'You slapped her 👋':'He slapped you 👋'
+      kiss: mine?`You kissed ${recipientP.obj} 💋`:`${senderP.subj} kissed you 💋`,
+      hug: mine?`You hugged ${recipientP.obj} 🤗`:`${senderP.subj} hugged you 🤗`,
+      slap: mine?`You slapped ${recipientP.obj} 👋`:`${senderP.subj} slapped you 👋`
     };
     div.textContent = labels[m.content]||m.content;
     wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight; return;
@@ -637,12 +676,20 @@ function renderMessage(m){
   const mini=document.createElement('div'); mini.className='mini'; mini.textContent=USERS[m.sender_id]?USERS[m.sender_id].emoji:'';
   const bub=document.createElement('div'); bub.className='bubble';
   let inner='';
-  if(m.type==='text') inner=escapeHtml(m.content);
-  else if(m.type==='sticker'){ bub.classList.add('sticker'); inner=m.content; }
-  else if(m.type==='voice') inner=voicePlayerHTML();
-  else if(m.type==='image') inner=`<img src="${m.media_url}" class="tapzoom">`;
-  else if(m.type==='video') inner=`<video src="${m.media_url}" class="tapzoom" muted playsinline preload="metadata"></video>`;
-  else if(m.type==='location') inner=`📍 <a href="${m.content}" target="_blank">Shared location</a>`;
+  if(m.reply_to_message_id){
+    const orig=messageCache.get(m.reply_to_message_id);
+    const origName=orig?(USERS[orig.sender_id]?USERS[orig.sender_id].name||orig.sender_id:orig.sender_id):null;
+    inner += `<div class="quote-ref" data-quote-id="${m.reply_to_message_id}">
+      <div class="qname">${orig?escapeHtml(origName):'Original message unavailable'}</div>
+      ${orig?`<div class="qtext">${escapeHtml(previewTextFor(orig)).slice(0,120)}</div>`:''}
+    </div>`;
+  }
+  if(m.type==='text') inner+=escapeHtml(m.content);
+  else if(m.type==='sticker'){ bub.classList.add('sticker'); inner+=m.content; }
+  else if(m.type==='voice') inner+=voicePlayerHTML();
+  else if(m.type==='image') inner+=`<img src="${m.media_url}" class="tapzoom">`;
+  else if(m.type==='video') inner+=`<video src="${m.media_url}" class="tapzoom" muted playsinline preload="metadata"></video>`;
+  else if(m.type==='location') inner+=`📍 <a href="${m.content}" target="_blank">Shared location</a>`;
   if(m.type!=='sticker'){
     const ticks = mine ? (m.seen?'✓✓':'✓') : '';
     inner += `<div class="meta">${fmtTime(m.created_at)}${m.seen&&m.seen_at?' · Seen '+fmtTime(m.seen_at):''} ${ticks}</div>`;
@@ -664,8 +711,76 @@ function renderMessage(m){
       lastTap=now;
     });
   }
+  const quoteRef=bub.querySelector('.quote-ref');
+  if(quoteRef){
+    quoteRef.onclick=(e)=>{
+      e.stopPropagation();
+      const targetId=quoteRef.dataset.quoteId;
+      const targetRow=document.querySelector(`.msgrow[data-id="${targetId}"]`);
+      if(!targetRow) return;
+      targetRow.scrollIntoView({block:'center',behavior:reducedMotion()?'auto':'smooth'});
+      targetRow.classList.add('highlight-flash');
+      setTimeout(()=>targetRow.classList.remove('highlight-flash'),1200);
+    };
+  }
+  wireLongPressReply(row, m);
 }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---- long-press (or right-click on desktop) to open a Reply action menu ---- */
+function wireLongPressReply(row, m){
+  if(m.type==='action'||m.type==='game') return;
+  let pressTimer=null, startX=0, startY=0, moved=false;
+  const cancel=()=>{ clearTimeout(pressTimer); pressTimer=null; };
+  row.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    moved=false; startX=e.clientX; startY=e.clientY;
+    pressTimer=setTimeout(()=>{ openMsgActionMenu(e.clientX,e.clientY,m); },450);
+  });
+  row.addEventListener('pointermove',e=>{
+    if(Math.abs(e.clientX-startX)>10||Math.abs(e.clientY-startY)>10){ moved=true; cancel(); }
+  });
+  row.addEventListener('pointerup',cancel);
+  row.addEventListener('pointerleave',cancel);
+  row.addEventListener('contextmenu',e=>{ e.preventDefault(); openMsgActionMenu(e.clientX,e.clientY,m); });
+}
+function openMsgActionMenu(x,y,m){
+  closeMsgActionMenu();
+  const menu=document.createElement('div');
+  menu.className='msg-action-menu';
+  menu.innerHTML=`<button type="button">↩ Reply</button>`;
+  document.body.appendChild(menu);
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const mw=140, mh=44;
+  menu.style.left=Math.min(x,vw-mw-10)+'px';
+  menu.style.top=Math.min(y,vh-mh-10)+'px';
+  menu.querySelector('button').onclick=()=>{ startReply(m); closeMsgActionMenu(); };
+  setTimeout(()=>{
+    document.addEventListener('pointerdown',outsideMenuClose);
+  },0);
+}
+function outsideMenuClose(e){
+  const menu=document.querySelector('.msg-action-menu');
+  if(menu && !menu.contains(e.target)) closeMsgActionMenu();
+}
+function closeMsgActionMenu(){
+  const menu=document.querySelector('.msg-action-menu');
+  if(menu) menu.remove();
+  document.removeEventListener('pointerdown',outsideMenuClose);
+}
+function startReply(m){
+  replyingTo={ id:m.id, sender_id:m.sender_id, previewText:previewTextFor(m) };
+  const bar=el('replyPreviewBar');
+  const name=USERS[m.sender_id]?USERS[m.sender_id].name||m.sender_id:m.sender_id;
+  el('replyPreviewName').textContent=name;
+  el('replyPreviewText').textContent=replyingTo.previewText.slice(0,100);
+  bar.classList.remove('hidden');
+  el('textInput').focus();
+}
+function cancelReply(){
+  replyingTo=null;
+  el('replyPreviewBar').classList.add('hidden');
+}
 
 /* ---- custom voice player — audio is stored as base64 directly on the message row,
    never touches Storage. Data is only fetched the first time someone taps play. ---- */
@@ -792,8 +907,10 @@ async function sendMessage(payload){
   broadcastActivity('sending', labels[payload.type]||'Sending message...');
   const pendingEl = addPending(payload);
   const row = Object.assign({sender_id:currentUser,receiver_id:partnerId},payload);
+  if(replyingTo && payload.type!=='action'){ row.reply_to_message_id = replyingTo.id; }
   const res = await sb.from('messages').insert(row).select().single();
   if(pendingEl) pendingEl.remove();
+  if(payload.type!=='action') cancelReply();
   if(res.data){
     renderMessage(res.data);
     const eventType = payload.type==='action' ? ('action_'+payload.content) : ('message_'+payload.type);
@@ -824,6 +941,7 @@ el('sendBtn').onclick=()=>{
   sendMessage({type:'text',content:val});
 };
 el('textInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('sendBtn').click(); });
+el('cancelReplyBtn').onclick=cancelReply;
 
 async function markIncomingSeen(){
   await sb.from('messages').update({seen:true,seen_at:new Date().toISOString()}).eq('receiver_id',currentUser).eq('seen',false).select();

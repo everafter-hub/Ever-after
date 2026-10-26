@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Our Little World 🌱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sky:#8DD9F5;--sky-d:#BFE9FA;--lavender:#C7B5F2;--lavender-d:#6B54A8;--lav-tint:#EFE8FC;
+  --cream:#FFF5E8;--leaf:#82C98B;--pink:#F4A8C7;--pink-tint:#FDEBF2;
+  --card:#FFFCF6;--line:#EFE2D0;--text:#4A4258;--muted:#938BA3;
+  --gold:#F0A93C;--blue:#4FB3DE;--lock:#9A9A9A;
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+body{font-family:var(--font);background:linear-gradient(180deg,var(--sky),var(--sky-d) 32%,var(--cream) 100%);min-height:100vh;color:var(--text);padding-bottom:78px;}
+.wrap{max-width:480px;margin:0 auto;padding:14px 12px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(46,59,42,.06);}
+/* header */
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border-radius:20px;padding:10px 14px;margin-bottom:12px;border:1px solid var(--line);}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand .e{font-size:1.6rem;}
+.ttl{font-weight:700;font-size:1.05rem;}
+.sub{font-size:.68rem;color:var(--muted);}
+.stats{text-align:right;font-size:.72rem;}
+.lvl{font-weight:700;color:var(--blue);}
+.xpbar{width:110px;height:6px;background:var(--line);border-radius:6px;margin:4px 0;overflow:hidden;}
+.xpfill{height:100%;background:var(--lavender);width:0%;transition:width .3s;}
+.coins{font-weight:700;color:var(--gold);}
+/* ground */
+.ground{background:#DFF3D6;border-radius:20px;aspect-ratio:1/1;border:1px solid var(--line);position:relative;overflow:hidden;}
+.row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:1.5rem;}
+.zone-trees .slot:nth-child(odd){margin-top:-5px;}
+.slot{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.35);border-radius:8px;font-size:1.2rem;}
+.built{font-size:2.6rem;display:flex;gap:4px;align-items:flex-end;}
+.pct{font-size:.6rem;background:rgba(255,255,255,.85);border-radius:8px;padding:1px 5px;position:relative;top:-4px;}
+.ground-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:opacity .25s linear;}
+.ground-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);color:#fff;padding:5px 10px;border-radius:10px;font-size:.68rem;font-weight:600;z-index:3;}
+/* progress */
+.progress-row{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:5px;}
+.progress-row b{color:var(--text);}
+.progress-outer{height:8px;background:var(--line);border-radius:6px;overflow:hidden;}
+.progress-inner{height:100%;background:linear-gradient(90deg,var(--lavender),var(--pink));transition:width .3s;}
+.section-pcts{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:.6rem;color:var(--muted);margin-top:8px;}
+.section-pcts b{color:var(--text);}
+/* action card */
+.actionTitle{font-weight:700;font-size:1rem;margin-bottom:2px;}
+.actionSub{font-size:.75rem;color:var(--muted);margin-bottom:10px;}
+.btnrow{display:flex;gap:8px;}
+.mainbtn{position:relative;}
+.mainbtn{flex:1;border:none;border-radius:16px;padding:14px;font-size:.95rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .12s;}
+.mainbtn:active{transform:scale(.96);}
+.mainbtn.bounce{animation:btn-bounce .35s ease;}
+@keyframes btn-bounce{0%{transform:scale(1);}40%{transform:scale(1.08);}100%{transform:scale(1);}}
+.pop-fx{position:absolute;left:50%;top:-6px;transform:translateX(-50%);pointer-events:none;font-size:1.15rem;animation:pop-fx .7s ease forwards;z-index:4;}
+@keyframes pop-fx{0%{opacity:1;transform:translate(-50%,0) scale(.6);}100%{opacity:0;transform:translate(-50%,-28px) scale(1.2);}}
+.buy{background:var(--gold);}
+.act{background:var(--blue);}
+.done{background:var(--leaf);}
+.mainbtn:disabled{background:#C9C9C9;cursor:default;}
+.mainbtn.locked{opacity:.45;}
+/* turn indicator */
+.turnbar{text-align:center;padding:12px;transition:background .25s;}
+.turnbar.you{background:#E4F6FD;border-color:#BFE9FA;}
+.turnbar.her{background:var(--pink-tint);border-color:#F6C9DE;}
+.turnWho{font-weight:800;font-size:1rem;}
+.turnbar.you .turnWho{color:var(--blue);}
+.turnbar.her .turnWho{color:var(--pink);}
+.turnSub{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.turnbar.locked{filter:grayscale(.35);}
+/* quick stats */
+.quick{display:flex;justify-content:space-around;text-align:center;}
+.quick div{font-size:.7rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;}
+.quick b{font-size:1.05rem;color:var(--text);}
+/* gift */
+.gift{text-align:center;background:linear-gradient(180deg,#5a4a7a,#8a6aa8);color:#fff;}
+.gift .e{font-size:2.2rem;}
+.gift small{opacity:.85;font-size:.68rem;}
+/* page content toggle (World / Stats) + compact site bottom nav */
+.pagetoggle{display:flex;gap:6px;margin:0 0 10px;}
+.ptbtn{flex:1;padding:7px 0;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.78rem;font-weight:600;font-family:inherit;cursor:pointer;}
+.ptbtn.active{color:var(--lavender-d);background:var(--lav-tint);border-color:transparent;}
+#bottomNav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:40;}
+#bottomNav .navtab{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:7px 0;background:none;border:none;color:var(--muted);font-size:.68rem;font-family:inherit;cursor:pointer;}
+#bottomNav .navtab .nic{font-size:.8rem;}
+#bottomNav .navtab.active{color:var(--lavender-d);font-weight:700;}
+.wrap{padding-bottom:56px;}
+/* achievements */
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ach{text-align:center;padding:10px 4px;border-radius:14px;background:#F6F4FA;font-size:.65rem;border:1px solid var(--line);}
+.ach .e{font-size:1.6rem;display:block;}
+.ach.locked{opacity:.45;}
+.ach.locked .e{filter:grayscale(1);}
+.statline{display:flex;justify-content:space-between;font-size:.8rem;padding:4px 0;border-bottom:1px solid var(--line);}
+.glog{font-size:.75rem;padding:5px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;color:var(--muted);}
+.glog b{color:var(--gold);}
+/* toast */
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120%);background:#2E3B2A;color:#fff;padding:12px 18px;border-radius:14px;font-size:.85rem;font-weight:600;z-index:50;transition:transform .35s;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.25);}
+#toast.show{transform:translateX(-50%) translateY(0);}
+/* final gift reveal */
+.giftReveal{position:fixed;inset:0;background:#0c0a08;z-index:1000;display:none;align-items:center;justify-content:center;padding:30px;}
+.giftReveal.show{display:flex;}
+.gr-stage{text-align:center;color:#f3ead6;max-width:340px;}
+.gr-box{font-size:4.5rem;margin-bottom:26px;}
+.gr-box.shake{animation:gr-shake .6s ease;}
+@keyframes gr-shake{0%,100%{transform:rotate(0);}20%{transform:rotate(-8deg);}40%{transform:rotate(8deg);}60%{transform:rotate(-6deg);}80%{transform:rotate(6deg);}}
+.gr-box.open{animation:gr-pop .5s ease;}
+@keyframes gr-pop{0%{transform:scale(1);}50%{transform:scale(1.35);}100%{transform:scale(1);}}
+.gr-text{font-size:1.05rem;line-height:1.6;min-height:70px;opacity:0;transition:opacity .7s;font-family:Georgia,serif;}
+.gr-text.show{opacity:1;}
+.gr-enter{display:none;margin-top:28px;background:#c9a227;color:#0c0a08;padding:15px 30px;border-radius:999px;text-decoration:none;font-weight:700;font-size:.9rem;}
+
+/* identity picker */
+.idpick{position:fixed;inset:0;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
+.idpick .card{max-width:320px;width:100%;text-align:center;margin:0;}
+.idpick h3{margin-bottom:4px;}
+.idpick p{font-size:.78rem;color:var(--muted);margin-bottom:14px;}
+.idrow{display:flex;gap:10px;}
+</style>
+</head>
+<body>
+<div class="idpick" id="whoPicker" style="display:none;">
+  <div class="card">
+    <h3>Who's playing? 💕</h3>
+    <p>Enter your password to continue</p>
+    <div class="idrow" id="idpickCards">
+      <button class="mainbtn buy" onclick="selectGateUser('irfu')">🧸 Irfan</button>
+      <button class="mainbtn act" onclick="selectGateUser('rifu')">👰🏻‍♀️ Rifana</button>
+    </div>
+    <div id="idpickPwWrap" style="display:none;margin-top:12px;">
+      <input type="password" id="idpickPw" placeholder="Password" style="width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);margin-bottom:8px;">
+      <button class="mainbtn act" style="width:100%;" onclick="confirmGateLogin()">Continue</button>
+      <div id="idpickErr" style="color:#c0392b;font-size:.75rem;margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+<div class="giftReveal" id="giftReveal">
+  <div class="gr-stage">
+    <div class="gr-box" id="grBox">🎁</div>
+    <div class="gr-text" id="grText"></div>
+    <a class="gr-enter" id="grEnter" href="index.html">✨ Enter Our Space</a>
+  </div>
+</div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="e">🌱</span><div><div class="ttl">Our Little World</div><div class="sub">Small clicks… big dreams…</div></div></div>
+    <div class="stats">
+      <div class="lvl">Lv <span id="lvl">1</span></div>
+      <div class="xpbar"><div class="xpfill" id="xpfill"></div></div>
+      <div class="coins">🪙 <span id="coins">0</span></div>
+    </div>
+  </header>
+
+  <div class="pagetoggle">
+    <button class="ptbtn active" id="tabWorldBtn" onclick="showTab('world')">🌍 World</button>
+    <button class="ptbtn" id="tabAchBtn" onclick="showTab('ach')">📊 Stats</button>
+  </div>
+
+  <main id="worldTab">
+    <div class="card">
+      <div class="progress-row"><span>🌍 World Progress</span><b id="worldPct">0%</b></div>
+      <div class="progress-outer"><div class="progress-inner" id="worldBar" style="width:0%"></div></div>
+      <div class="section-pcts" id="sectionPcts"></div>
+    </div>
+    <div class="ground" id="ground">
+      <img class="ground-img" id="groundBottom" src="">
+      <img class="ground-img" id="groundTop" src="" style="opacity:0;">
+      <div class="ground-badge" id="groundBadge">—</div>
+    </div>
+    <div class="card turnbar" id="turnBar">
+      <div class="turnWho" id="turnWho">Your turn</div>
+      <div class="turnSub" id="turnSub">Go ahead, make your move</div>
+    </div>
+    <div class="card">
+      <div class="actionTitle" id="aTitle">—</div>
+      <div class="actionSub" id="aSub">—</div>
+      <div class="btnrow">
+        <button class="mainbtn buy" id="buyBtn">Buy</button>
+        <button class="mainbtn act" id="actBtn">Act</button>
+      </div>
+    </div>
+    <div class="card quick">
+      <div>👆<b id="qClicks">0</b>Clicks</div>
+      <div>🔥<b id="qStreak">0</b>Streak</div>
+      <div>📅<b id="qDays">0</b>Active days</div>
+    </div>
+    <div class="card gift" id="giftBox"></div>
+  </main>
+
+  <main id="achTab" style="display:none">
+    <div class="card">
+      <h3 style="margin-bottom:6px;">Your stats</h3>
+      <div id="statList"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px;">Achievements</h3>
+      <div class="ach-grid" id="achGrid"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:6px;">Gifts received</h3>
+      <div id="giftLog"><div class="glog"><span>Nothing yet</span></div></div>
+    </div>
+  </main>
+</div>
+
+<div id="bottomNav">
+  <button class="navtab" type="button" onclick="location.href='index.html'"><span class="nic">💬</span>Messages</button>
+  <button class="navtab active" type="button"><span class="nic">🌱</span>Our Little World</button>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ===== Supabase — same project as index.html (migrated from the old separate project) ===== */
+const SB='https://lzagntpccmvyirvtzwst.supabase.co';
+const SKEY='sb_publishable_nra8AJ_mOx22lxLj4MpvDw_Zi7ExCnU';
+async function api(method,path,body){
+  const headers={'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'};
+  if(method==='POST'||method==='PATCH')headers['Prefer']='return=minimal';
+  const r=await fetch(SB+'/rest/v1/'+path,{method,headers,body:body?JSON.stringify(body):undefined});
+  if(method==='GET')return r.json();
+  return r;
+}
+/* Internal state keys stay 'fawaz'/'pathumma' (stable IDs, so no data gets orphaned) —
+   only the DISPLAYED names change, per the "preserve IDs, update display names" rule. */
+const NAMES={fawaz:'🧸 Irfan',pathumma:'👰🏻‍♀️ Rifana'};
+/* site user id -> this game's internal player key */
+const SITE_TO_GAME={irfu:'fawaz',rifu:'pathumma'};
+const GAME_TO_SITE={fawaz:'irfu',pathumma:'rifu'};
+const GATE_PASSWORDS={irfu:'irfu',rifu:'2012'};
+let gateSelected=null;
+function getIdentity(){
+  let siteUser=null;
+  try{ siteUser=sessionStorage.getItem('ever_after_user'); }catch(err){}
+  if(siteUser && SITE_TO_GAME[siteUser]) return SITE_TO_GAME[siteUser];
+  return null;
+}
+let ME=getIdentity();
+function selectGateUser(siteId){
+  gateSelected=siteId;
+  document.getElementById('idpickCards').style.display='none';
+  document.getElementById('idpickPwWrap').style.display='block';
+  document.getElementById('idpickPw').focus();
+}
+function confirmGateLogin(){
+  if(!gateSelected) return;
+  if(document.getElementById('idpickPw').value===GATE_PASSWORDS[gateSelected]){
+    try{ sessionStorage.setItem('ever_after_user',gateSelected); }catch(err){}
+    ME=SITE_TO_GAME[gateSelected];
+    document.getElementById('whoPicker').style.display='none';
+    boot();
+  } else {
+    document.getElementById('idpickErr').textContent='Incorrect password.';
+  }
+}
+
+/* ===== economy — tweak these anytime ===== */
+const CFG={
+  seedCost:8, seedReward:12, gardenTarget:8,
+  axeCost:35, treeClicks:20, treeReward:2, treeTarget:4,
+  wallCost:45, wallClicks:16, wallReward:2,
+  toolCost:90, houseClicks:20, houseReward:2,
+  poolCost:70, poolClicks:12, poolReward:2,
+  furnCost:55, furnClicks:12, furnReward:3,
+  puppyCost:70, feedsNeeded:18, feedReward:3,
+  doghouseCost:35, doghouseClicks:8, doghouseReward:2,
+  giftDate:'2026-11-20'
+};
+function fresh(){return{
+  stage:0,coins:60,xp:0,level:1,totalClicks:0,
+  currentPlayer:'fawaz',actions:{fawaz:0,pathumma:0},
+  garden:{owned:0,hasSeed:false},
+  trees:{owned:0,hasAxe:false,progress:0},
+  wall:{hasTool:false,progress:0,built:false},
+  house:{hasTool:false,progress:0,built:false},
+  pool:{hasTool:false,progress:0,built:false},
+  furn:{hasTool:false,progress:0,built:false},
+  pet:{hasPet:false,feeds:0,grown:false,hasDog:false,progress:0,built:false},
+  spent:{},gifts:[],ach:{},
+  streak:{current:0,longest:0,activeDays:0,last:null}
+};}
+let S=fresh();
+async function loadRemote(){
+  try{
+    const rows=await api('GET','world_game_state?id=eq.1&select=state');
+    if(rows&&rows.length&&rows[0].state&&Object.keys(rows[0].state).length){S=Object.assign(fresh(),rows[0].state);}
+    else{S=fresh();await api('POST','world_game_state',{id:1,state:S});}
+  }catch(e){console.log('load err',e);S=fresh();}
+}
+async function save(){try{await api('PATCH','world_game_state?id=eq.1',{state:S});}catch(e){console.log('save err',e);}}
+async function logEvent(actor,kind,label,amount){
+  try{await api('POST','world_game_events',{actor,kind,label,amount:amount||0,day:todayStr()});}catch(e){console.log('log err',e);}
+}
+
+function spend(cat,amt){S.coins-=amt;S.spent[cat]=(S.spent[cat]||0)+amt;}
+function earn(amt){S.coins+=amt;}
+function addXP(n){S.xp+=n;const need=S.level*50;if(S.xp>=need){S.xp-=need;S.level++;toast('⭐ Level up! Lv '+S.level);}}
+function click(){S.totalClicks++;addXP(1);}
+
+/* ===== turn system — identity-verified across two real devices via Supabase ===== */
+let busy=false;
+function myTurn(){return S.currentPlayer===ME;}
+function useTurn(label,kind){
+  const actor=S.currentPlayer;
+  S.actions[actor]=(S.actions[actor]||0)+1;
+  S.currentPlayer=actor==='fawaz'?'pathumma':'fawaz';
+  if(label)logEvent(actor,kind||'action',label);
+}
+function renderTurn(){
+  const bar=document.getElementById('turnBar');
+  const mine=myTurn();
+  bar.className='card turnbar '+(mine?'you':'her')+(busy?' locked':'');
+  document.getElementById('turnWho').textContent=(busy?'🔒 ':'')+(mine?NAMES[ME].split(' ')[0]+' Your turn':NAMES[S.currentPlayer]+'’s turn');
+  document.getElementById('turnSub').textContent=busy?'Saving…':(mine?'Go ahead, make your move':'Waiting for '+NAMES[S.currentPlayer].split(' ')[1]+' to play');
+  buyBtn().classList.toggle('locked',busy||!mine);
+  actBtn().classList.toggle('locked',busy||!mine);
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200);}
+function popFX(btn,emoji){
+  if(!btn)return;
+  btn.classList.remove('bounce');void btn.offsetWidth;btn.classList.add('bounce');
+  const s=document.createElement('span');s.className='pop-fx';s.textContent=emoji;
+  btn.appendChild(s);
+  setTimeout(()=>s.remove(),700);
+}
+function gift(name,amt){earn(amt);S.gifts.unshift({name,amt,when:new Date().toLocaleDateString()});S.gifts=S.gifts.slice(0,20);toast('🎁 '+name+' +'+amt+' coins');}
+
+/* ===== streak ===== */
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function touchStreak(){
+  const t=todayStr();
+  if(S.streak.last===t)return;
+  const y=new Date();y.setDate(y.getDate()-1);
+  const yest=y.toISOString().slice(0,10);
+  if(S.streak.last===yest)S.streak.current++;
+  else S.streak.current=1;
+  S.streak.longest=Math.max(S.streak.longest,S.streak.current);
+  S.streak.activeDays++;
+  S.streak.last=t;
+}
+
+/* ===== achievements ===== */
+const ACH=[
+  {id:'first',e:'🌱',n:'First Life',d:'Plant your first seed',c:()=>S.garden.owned>=1||S.garden.hasSeed},
+  {id:'care5',e:'💧',n:'Caretaker',d:'Water 5 times',c:()=>S.garden.owned>=5},
+  {id:'gardenfull',e:'🌸',n:'Green Thumb',d:'Fill the garden',c:()=>S.garden.owned>=CFG.gardenTarget},
+  {id:'firsttree',e:'🪓',n:'Woodcutter',d:'Grow your first tree',c:()=>S.trees.owned>=1},
+  {id:'forest',e:'🌳',n:'Rooted',d:'Grow every tree',c:()=>S.trees.owned>=CFG.treeTarget},
+  {id:'wall',e:'🧱',n:'Our Boundary',d:'Build the wall',c:()=>S.wall.built},
+  {id:'house',e:'🏡',n:'Home Builder',d:'Build the house',c:()=>S.house.built},
+  {id:'pool',e:'🏊',n:'Splash',d:'Build the pool',c:()=>S.pool.built},
+  {id:'furn',e:'🛋️',n:'Cozy Corner',d:'Add the furniture',c:()=>S.furn.built},
+  {id:'pet',e:'🐶',n:'New Friend',d:'Adopt a pet',c:()=>S.pet.hasPet},
+  {id:'petgrown',e:'🐕',n:'Big Boy',d:'Pet is fully grown',c:()=>S.pet.built},
+  {id:'click100',e:'👆',n:'100 Clicks',d:'Click 100 times',c:()=>S.totalClicks>=100},
+  {id:'click500',e:'👆',n:'500 Clicks',d:'Click 500 times',c:()=>S.totalClicks>=500},
+  {id:'streak3',e:'🔥',n:'3-Day Streak',d:'Play 3 days in a row',c:()=>S.streak.current>=3},
+  {id:'streak7',e:'🔥',n:'7-Day Streak',d:'Play 7 days in a row',c:()=>S.streak.current>=7},
+];
+function checkAch(){
+  ACH.forEach(a=>{if(!S.ach[a.id]&&a.c()){S.ach[a.id]=true;gift(a.n,15);logEvent(S.currentPlayer,'achievement','🏆 '+a.n,15);}});
+}
+
+/* ===== stage engine =====
+   stage 0 garden(collect) 1 trees(collect) 2 wall(build) 3 house(build) 4 pool(build) 5 furn(build) 6 pet(special) 7 done */
+function buyBtn(){return document.getElementById('buyBtn');}
+function actBtn(){return document.getElementById('actBtn');}
+
+function render(){
+  document.getElementById('lvl').textContent=S.level;
+  document.getElementById('coins').textContent=S.coins;
+  document.getElementById('xpfill').style.width=Math.min(100,(S.xp/(S.level*50))*100)+'%';
+  document.getElementById('qClicks').textContent=S.totalClicks;
+  document.getElementById('qStreak').textContent=S.streak.current;
+  document.getElementById('qDays').textContent=S.streak.activeDays;
+  renderGround();
+  renderProgress();
+  renderAction();
+  renderTurn();
+  renderGift();
+  renderAchTab();
+  save();
+}
+
+// world-images/level-1-ground.jpg … level-9-final.jpg — upload this folder next to the html
+const LEVEL_FILES=['level-1-ground','level-2-garden','level-3-trees','level-4-wall','level-5-home','level-6-pool','level-7-furniture','level-8-puppy','level-9-final'];
+function levelSrc(i){return 'world-images/'+LEVEL_FILES[i]+'.jpg';}
+let preloaded={};
+function preload(i){if(preloaded[i])return;preloaded[i]=true;const im=new Image();im.src=levelSrc(i);}
+
+function renderGround(){
+  const bottom=document.getElementById('groundBottom'), top=document.getElementById('groundTop'), badge=document.getElementById('groundBadge');
+  const {sections}=computeProgress();
+  if(S.stage>=7){
+    bottom.src=levelSrc(8); top.src=levelSrc(8);
+    bottom.style.opacity=1; top.style.opacity=0;
+    badge.textContent='🎉 World Complete';
+    return;
+  }
+  const st=S.stage;
+  const prog=sections[st][1];
+  bottom.src=levelSrc(st); top.src=levelSrc(st+1);
+  top.style.opacity=prog/100; bottom.style.opacity=1-prog/100;
+  badge.textContent=sections[st][0]+' — '+prog+'%';
+  preload(st+2<9?st+2:8);
+}
+
+function pct(n,d){return d?Math.min(100,Math.round(n/d*100)):0;}
+function computeProgress(){
+  const garden=pct(S.garden.owned,CFG.gardenTarget);
+  const treesDone=S.trees.owned*CFG.treeClicks+S.trees.progress;
+  const trees=pct(treesDone,CFG.treeTarget*CFG.treeClicks);
+  const wall=S.wall.built?100:(S.wall.hasTool?pct(S.wall.progress,CFG.wallClicks):0);
+  const house=S.house.built?100:(S.house.hasTool?pct(S.house.progress,CFG.houseClicks):0);
+  const pool=S.pool.built?100:(S.pool.hasTool?pct(S.pool.progress,CFG.poolClicks):0);
+  const furn=S.furn.built?100:(S.furn.hasTool?pct(S.furn.progress,CFG.furnClicks):0);
+  let pet=0;
+  if(S.pet.built)pet=100;
+  else if(S.pet.hasDog)pet=Math.round(80+pct(S.pet.progress,CFG.doghouseClicks)*0.2);
+  else if(S.pet.grown)pet=70;
+  else if(S.pet.hasPet)pet=Math.round(pct(S.pet.feeds,CFG.feedsNeeded)*0.7);
+  const sections=[['🌸 Garden',garden],['🌳 Trees',trees],['🧱 Wall',wall],['🏡 Home',house],['🏊 Pool',pool],['🛋️ Furniture',furn],['🐶 Pet',pet]];
+  const overall=Math.round(sections.reduce((a,[,v])=>a+v,0)/sections.length);
+  return{sections,overall};
+}
+function renderProgress(){
+  const{sections,overall}=computeProgress();
+  document.getElementById('worldPct').textContent=overall+'%';
+  document.getElementById('worldBar').style.width=overall+'%';
+  document.getElementById('sectionPcts').innerHTML=sections.map(([n,v])=>'<span>'+n+' <b>'+v+'%</b></span>').join('');
+}
+
+function setAction(title,sub,buyLabel,buyShow,actLabel,actShow,actDisabled){
+  document.getElementById('aTitle').textContent=title;
+  document.getElementById('aSub').textContent=sub;
+  const b=buyBtn(),a=actBtn();
+  b.style.display=buyShow?'block':'none';
+  a.style.display=actShow?'block':'none';
+  b.textContent=buyLabel;a.textContent=actLabel;
+  a.disabled=!!actDisabled;
+}
+
+function renderAction(){
+  const st=S.stage;
+  if(st===0){ // garden
+    if(S.garden.owned>=CFG.gardenTarget){ S.stage=1; return renderAction(); }
+    if(!S.garden.hasSeed) setAction('Garden 🌸','Grow '+(CFG.gardenTarget-S.garden.owned)+' more flowers','Buy Seed ₹'+CFG.seedCost,true,'Water',false);
+    else setAction('Garden 🌸','Seed planted — water it!','Buy Seed',false,'Water 💧',true);
+  } else if(st===1){ // trees
+    if(S.trees.owned>=CFG.treeTarget){ S.stage=2; return renderAction(); }
+    if(!S.trees.hasAxe) setAction('Trees 🌳','Get a tool to start planting','Buy Axe ₹'+CFG.axeCost,true,'Grow',false);
+    else setAction('Trees 🌳','Growing… '+Math.round(S.trees.progress/CFG.treeClicks*100)+'%','Buy Axe',false,'Grow 🌱',true);
+  } else if(st===2){ // wall
+    if(S.wall.built){ S.stage=3; return renderAction(); }
+    if(!S.wall.hasTool) setAction('Wall 🧱','Mark out our little boundary','Buy Wall Kit ₹'+CFG.wallCost,true,'Build',false);
+    else setAction('Wall 🧱','Building… '+Math.round(S.wall.progress/CFG.wallClicks*100)+'%','Buy Wall Kit',false,'Build 🔨',true);
+  } else if(st===3){ // house
+    if(S.house.built){ S.stage=4; return renderAction(); }
+    if(!S.house.hasTool) setAction('House 🏡','Buy tools to start building','Buy Tool Kit ₹'+CFG.toolCost,true,'Build',false);
+    else setAction('House 🏡','Building… '+Math.round(S.house.progress/CFG.houseClicks*100)+'%','Buy Tool Kit',false,'Build 🔨',true);
+  } else if(st===4){ // pool
+    if(S.pool.built){ S.stage=5; return renderAction(); }
+    if(!S.pool.hasTool) setAction('Pool 🏊','Time for a little pool','Buy Pool Kit ₹'+CFG.poolCost,true,'Build',false);
+    else setAction('Pool 🏊','Building… '+Math.round(S.pool.progress/CFG.poolClicks*100)+'%','Buy Pool Kit',false,'Build 🔨',true);
+  } else if(st===5){ // furniture
+    if(S.furn.built){ S.stage=6; return renderAction(); }
+    if(!S.furn.hasTool) setAction('Furniture 🛋️','A cozy corner outside','Buy Furniture ₹'+CFG.furnCost,true,'Build',false);
+    else setAction('Furniture 🛋️','Building… '+Math.round(S.furn.progress/CFG.furnClicks*100)+'%','Buy Furniture',false,'Build 🔨',true);
+  } else if(st===6){ // pet
+    if(!S.pet.hasPet) setAction('Pet 🐶','Bring home a little friend','Buy Puppy ₹'+CFG.puppyCost,true,'Feed',false);
+    else if(!S.pet.grown) setAction('Pet 🐶','Feeding… '+S.pet.feeds+'/'+CFG.feedsNeeded,'Buy Puppy',false,'Feed 🍖',true);
+    else if(!S.pet.hasDog) setAction('Doghouse 🏚️','Give your pet a home','Buy Doghouse ₹'+CFG.doghouseCost,true,'Build',false);
+    else if(!S.pet.built) setAction('Doghouse 🏚️','Building… '+Math.round(S.pet.progress/CFG.doghouseClicks*100)+'%','Buy Doghouse',false,'Build 🔨',true);
+    else { S.stage=7; return renderAction(); }
+  } else {
+    setAction('Ground complete! 🎉','The sea update is coming soon…','',false,'',false);
+  }
+}
+
+buyBtn().onclick=async()=>{
+  if(!myTurn()){toast('🔒 '+NAMES[S.currentPlayer]+'’s turn — not yours yet 💕');return;}
+  if(busy)return;
+  busy=true;render();
+  click();
+  const st=S.stage;let did=false,label='';
+  if(st===0&&S.coins>=CFG.seedCost&&!S.garden.hasSeed){spend('seed',CFG.seedCost);S.garden.hasSeed=true;did=true;label='🌱 Bought a seed';}
+  else if(st===1&&!S.trees.hasAxe&&S.coins>=CFG.axeCost){spend('axe',CFG.axeCost);S.trees.hasAxe=true;did=true;label='🪓 Bought an axe';}
+  else if(st===2&&!S.wall.hasTool&&S.coins>=CFG.wallCost){spend('wall',CFG.wallCost);S.wall.hasTool=true;did=true;label='🧱 Bought a wall kit';}
+  else if(st===3&&!S.house.hasTool&&S.coins>=CFG.toolCost){spend('house',CFG.toolCost);S.house.hasTool=true;did=true;label='🧰 Bought a tool kit';}
+  else if(st===4&&!S.pool.hasTool&&S.coins>=CFG.poolCost){spend('pool',CFG.poolCost);S.pool.hasTool=true;did=true;label='🏊 Bought a pool kit';}
+  else if(st===5&&!S.furn.hasTool&&S.coins>=CFG.furnCost){spend('furn',CFG.furnCost);S.furn.hasTool=true;did=true;label='🛋️ Bought furniture';}
+  else if(st===6){
+    if(!S.pet.hasPet&&S.coins>=CFG.puppyCost){spend('pet',CFG.puppyCost);S.pet.hasPet=true;did=true;label='🐶 Brought home a puppy';}
+    else if(S.pet.grown&&!S.pet.hasDog&&S.coins>=CFG.doghouseCost){spend('dog',CFG.doghouseCost);S.pet.hasDog=true;did=true;label='🏠 Bought a doghouse kit';}
+  }
+  if(did){useTurn(label,'purchase');popFX(buyBtn(),'🪙');}else toast('Not enough coins yet 🪙');
+  checkAch();render();
+  await save();
+  busy=false;render();
+};
+actBtn().onclick=async()=>{
+  if(!myTurn()){toast('🔒 '+NAMES[S.currentPlayer]+'’s turn — not yours yet 💕');return;}
+  if(busy)return;
+  busy=true;render();
+  click();
+  const st=S.stage;let did=false,label='';
+  if(st===0&&S.garden.hasSeed){S.garden.hasSeed=false;S.garden.owned++;earn(CFG.seedReward);addXP(3);did=true;label='💧 Watered the garden';}
+  else if(st===1&&S.trees.hasAxe){S.trees.progress++;earn(CFG.treeReward);if(S.trees.progress>=CFG.treeClicks){S.trees.progress=0;S.trees.owned++;S.trees.hasAxe=S.trees.owned<CFG.treeTarget;addXP(5);}did=true;label='🌳 Grew a tree';}
+  else if(st===2&&S.wall.hasTool){S.wall.progress++;earn(CFG.wallReward);if(S.wall.progress>=CFG.wallClicks){S.wall.built=true;addXP(9);}did=true;label='🧱 Built part of the wall';}
+  else if(st===3&&S.house.hasTool){S.house.progress++;earn(CFG.houseReward);if(S.house.progress>=CFG.houseClicks){S.house.built=true;addXP(10);}did=true;label='🏡 Built part of the house';}
+  else if(st===4&&S.pool.hasTool){S.pool.progress++;earn(CFG.poolReward);if(S.pool.progress>=CFG.poolClicks){S.pool.built=true;addXP(8);}did=true;label='🏊 Built the pool';}
+  else if(st===5&&S.furn.hasTool){S.furn.progress++;earn(CFG.furnReward);if(S.furn.progress>=CFG.furnClicks){S.furn.built=true;addXP(8);}did=true;label='🛋️ Added furniture';}
+  else if(st===6){
+    if(S.pet.hasPet&&!S.pet.grown){S.pet.feeds++;earn(CFG.feedReward);if(S.pet.feeds>=CFG.feedsNeeded){S.pet.grown=true;addXP(10);}did=true;label='🍖 Fed the puppy';}
+    else if(S.pet.hasDog&&!S.pet.built){S.pet.progress++;earn(CFG.doghouseReward);if(S.pet.progress>=CFG.doghouseClicks){S.pet.built=true;addXP(12);}did=true;label='🏠 Built the doghouse';}
+  }
+  if(did){touchStreak();useTurn(label,'action');popFX(actBtn(),['💧','🌿','🧱','🔨','🏊','🛋️','🍖'][st]||'✨');}
+  checkAch();render();
+  await save();
+  busy=false;render();
+};
+
+/* ===== gift box (locked until CFG.giftDate) ===== */
+function renderGift(){
+  const box=document.getElementById('giftBox');
+  const now=new Date(),target=new Date(CFG.giftDate+'T00:00:00');
+  if(now>=target){ box.innerHTML='<div class="e">🎁</div><div>The final gift is ready</div><small>Tap to open it 🤍</small>'; box.style.cursor='pointer'; box.onclick=openFinalGift; }
+  else { box.innerHTML='<div class="e">🎁🔒</div><div>The final gift is waiting…</div><small>Some things are worth waiting for…</small>'; box.onclick=null; box.style.cursor='default'; }
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function openFinalGift(){
+  const overlay=document.getElementById('giftReveal'),box=document.getElementById('grBox'),
+        text=document.getElementById('grText'),enter=document.getElementById('grEnter');
+  overlay.classList.add('show');
+  box.className='gr-box shake';box.textContent='🎁';
+  await sleep(700);
+  box.className='gr-box open';box.textContent='✨';
+  await sleep(600);
+  const lines=['You made it.','But this wasn\u2019t really about finishing a game.','It was about everything you built along the way.'];
+  for(const line of lines){
+    text.textContent=line;text.classList.add('show');
+    await sleep(2300);
+    text.classList.remove('show');
+    await sleep(500);
+  }
+  text.textContent='';
+  enter.style.display='inline-block';
+}
+
+/* ===== achievements tab ===== */
+function renderAchTab(){
+  const stat=document.getElementById('statList');
+  const totalSpent=Object.values(S.spent).reduce((a,b)=>a+b,0);
+  stat.innerHTML=[
+    ['Total clicks',S.totalClicks],['Level',S.level],
+    [NAMES.fawaz,S.actions.fawaz||0],[NAMES.pathumma,S.actions.pathumma||0],
+    ['Coins spent — seeds','₹'+(S.spent.seed||0)],
+    ['Coins spent — tools','₹'+((S.spent.axe||0)+(S.spent.wall||0)+(S.spent.house||0)+(S.spent.pool||0)+(S.spent.furn||0))],
+    ['Coins spent — pet','₹'+((S.spent.pet||0)+(S.spent.dog||0))],
+    ['Total spent','₹'+totalSpent],
+    ['Current streak',S.streak.current+' days'],['Longest streak',S.streak.longest+' days'],['Active days',S.streak.activeDays]
+  ].map(([k,v])=>'<div class="statline"><span>'+k+'</span><b>'+v+'</b></div>').join('');
+
+  document.getElementById('achGrid').innerHTML=ACH.map(a=>{
+    const on=!!S.ach[a.id];
+    return '<div class="ach '+(on?'':'locked')+'"><span class="e">'+(on?a.e:'❓')+'</span>'+(on?a.n:'???')+'</div>';
+  }).join('');
+
+  const log=document.getElementById('giftLog');
+  log.innerHTML=S.gifts.length?S.gifts.map(g=>'<div class="glog"><span>'+g.name+'</span><b>+'+g.amt+' 🪙</b> <span>'+g.when+'</span></div>').join(''):'<div class="glog"><span>Nothing yet</span></div>';
+}
+
+function showTab(t){
+  document.getElementById('worldTab').style.display=t==='world'?'block':'none';
+  document.getElementById('achTab').style.display=t==='ach'?'block':'none';
+  document.getElementById('tabWorldBtn').classList.toggle('active',t==='world');
+  document.getElementById('tabAchBtn').classList.toggle('active',t==='ach');
+}
+
+async function boot(){
+  if(!ME){document.getElementById('whoPicker').style.display='flex';return;}
+  document.getElementById('whoPicker').style.display='none';
+  await loadRemote();
+  touchStreak();
+  render();
+  await save();
+  setInterval(pollRemote,6000);
+}
+async function pollRemote(){
+  if(document.hidden||busy)return;
+  try{
+    const rows=await api('GET','world_game_state?id=eq.1&select=state');
+    if(rows&&rows.length&&rows[0].state){
+      const remote=JSON.stringify(rows[0].state);
+      if(remote!==JSON.stringify(S)){S=Object.assign(fresh(),rows[0].state);render();}
+    }
+  }catch(e){}
+}
+boot();
+</script>
+</body>
+</html>
