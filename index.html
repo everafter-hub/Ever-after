@@ -489,6 +489,8 @@ async function enterChat(id){
   try{ sessionStorage.setItem('ever_after_user', id); }catch(err){}
   el('selfBtn').textContent = USERS[id].emoji;
 
+  /* coming back from the game tab restores the session without the lock screen, so profiles may not be loaded yet */
+  if(!profiles[partnerId]||!profiles[currentUser]){ try{ const pr=await sb.from('profiles').select('*'); (pr.data||[]).forEach(p=>{ profiles[p.id]=p; }); }catch(err){ console.warn('profiles load failed',err); } }
   /* reveal immediately using data already fetched on the lock screen — no waiting on network */
   el('lockScreen').classList.add('fadeout');
   el('chatScreen').classList.remove('hidden');
@@ -628,6 +630,7 @@ async function loadMessages(){
   });
   wrap.scrollTop=wrap.scrollHeight;
 }
+function displayName(id){ return (profiles[id]&&profiles[id].name)||(USERS[id]&&USERS[id].name)||id; }
 function previewTextFor(m){
   if(!m) return '';
   if(m.type==='text') return m.content;
@@ -678,7 +681,7 @@ function renderMessage(m){
   let inner='';
   if(m.reply_to_message_id){
     const orig=messageCache.get(m.reply_to_message_id);
-    const origName=orig?(USERS[orig.sender_id]?USERS[orig.sender_id].name||orig.sender_id:orig.sender_id):null;
+    const origName=orig?displayName(orig.sender_id):null;
     inner += `<div class="quote-ref" data-quote-id="${m.reply_to_message_id}">
       <div class="qname">${orig?escapeHtml(origName):'Original message unavailable'}</div>
       ${orig?`<div class="qtext">${escapeHtml(previewTextFor(orig)).slice(0,120)}</div>`:''}
@@ -771,7 +774,7 @@ function closeMsgActionMenu(){
 function startReply(m){
   replyingTo={ id:m.id, sender_id:m.sender_id, previewText:previewTextFor(m) };
   const bar=el('replyPreviewBar');
-  const name=USERS[m.sender_id]?USERS[m.sender_id].name||m.sender_id:m.sender_id;
+  const name=displayName(m.sender_id);
   el('replyPreviewName').textContent=name;
   el('replyPreviewText').textContent=replyingTo.previewText.slice(0,100);
   bar.classList.remove('hidden');
