@@ -97,18 +97,90 @@ body{font-family:var(--font);background:linear-gradient(180deg,var(--sky),var(--
 /* toast */
 #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120%);background:#2E3B2A;color:#fff;padding:12px 18px;border-radius:14px;font-size:.85rem;font-weight:600;z-index:50;transition:transform .35s;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.25);}
 #toast.show{transform:translateX(-50%) translateY(0);}
-/* final gift reveal */
-.giftReveal{position:fixed;inset:0;background:#0c0a08;z-index:1000;display:none;align-items:center;justify-content:center;padding:30px;}
-.giftReveal.show{display:flex;}
-.gr-stage{text-align:center;color:#f3ead6;max-width:340px;}
-.gr-box{font-size:4.5rem;margin-bottom:26px;}
-.gr-box.shake{animation:gr-shake .6s ease;}
-@keyframes gr-shake{0%,100%{transform:rotate(0);}20%{transform:rotate(-8deg);}40%{transform:rotate(8deg);}60%{transform:rotate(-6deg);}80%{transform:rotate(6deg);}}
-.gr-box.open{animation:gr-pop .5s ease;}
-@keyframes gr-pop{0%{transform:scale(1);}50%{transform:scale(1.35);}100%{transform:scale(1);}}
-.gr-text{font-size:1.05rem;line-height:1.6;min-height:70px;opacity:0;transition:opacity .7s;font-family:Georgia,serif;}
-.gr-text.show{opacity:1;}
-.gr-enter{display:none;margin-top:28px;background:#c9a227;color:#0c0a08;padding:15px 30px;border-radius:999px;text-decoration:none;font-weight:700;font-size:.9rem;}
+
+/* ===== GRAND FINALE (lavender / pink / rose-gold night garden) ===== */
+.fin{position:fixed;inset:0;z-index:1000;display:none;color:#fbeff6;font-family:Georgia,'Times New Roman',serif;background:radial-gradient(120% 90% at 50% 0%,#3b2a63 0%,#22163f 48%,#120b26 100%);opacity:0;transition:opacity 1.1s ease;overflow:hidden;}
+.fin.show{display:block;}
+.fin.on{opacity:1;}
+.fin::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(180deg,transparent,rgba(233,168,184,.16));pointer-events:none;}
+.fin-stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.35;animation:fin-tw 3.4s ease-in-out infinite;}
+@keyframes fin-tw{0%,100%{opacity:.12;}50%{opacity:.8;}}
+.fin-x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;z-index:6;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;font-size:15px;cursor:pointer;}
+.fin-main{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 54px) 18px 28px;z-index:2;-webkit-overflow-scrolling:touch;}
+.fin-intro{position:absolute;left:0;right:0;top:38%;margin:0 auto;max-width:320px;padding:0 20px;text-align:center;font-size:1.15rem;line-height:1.6;opacity:0;transition:opacity 1s;z-index:3;}
+.fin-intro.show{opacity:1;}
+
+/* gift box */
+.fin-gift{position:absolute;left:50%;top:50%;width:min(72vw,290px);transform:translate(-50%,-52%);opacity:0;transition:opacity 1.2s ease,transform 1.5s ease;z-index:4;text-align:center;}
+.fin-gift.show{opacity:1;}
+.fin-gift.fade{opacity:0;transform:translate(-50%,-40%) scale(.9);pointer-events:none;}
+.fin-glow{position:absolute;left:50%;top:48%;width:130%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,160,215,.5) 0,rgba(165,120,255,.28) 42%,transparent 68%);animation:fin-beat 2.8s ease-in-out infinite;pointer-events:none;}
+@keyframes fin-beat{0%,100%{transform:translate(-50%,-50%) scale(1);}14%{transform:translate(-50%,-50%) scale(1.1);}28%{transform:translate(-50%,-50%) scale(1);}42%{transform:translate(-50%,-50%) scale(1.06);}70%{transform:translate(-50%,-50%) scale(1);}}
+.fin-giftsvg{position:relative;width:100%;display:block;animation:fin-float 3.8s ease-in-out infinite;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+@keyframes fin-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.fin-gift.shake .fin-giftsvg{animation:fin-shake .8s ease;}
+@keyframes fin-shake{0%,100%{transform:rotate(0);}15%{transform:rotate(-5deg);}35%{transform:rotate(5deg);}55%{transform:rotate(-3.5deg);}75%{transform:rotate(3deg);}}
+#finLid{transform-box:fill-box;transform-origin:0% 100%;transition:transform 1.7s cubic-bezier(.22,.8,.2,1);}
+.fin-gift.open #finLid{transform:translate(-16px,-64px) rotate(-19deg);}
+#finBow{transform-box:fill-box;transform-origin:50% 100%;transition:transform 1s ease;}
+.fin-gift.loose #finBow{transform:rotate(-9deg) scale(1.12);}
+.fin-rib{transform-box:fill-box;transform-origin:50% 50%;transition:transform 1s ease,opacity 1s ease;}
+.fin-gift.loose .fin-rib{transform:scaleX(.5);opacity:.85;}
+.fin-tap{margin-top:14px;font-size:.98rem;letter-spacing:.02em;opacity:0;transition:opacity 1s;}
+.fin-tap.show{opacity:.95;animation:fin-tapp 2.2s ease-in-out infinite;}
+@keyframes fin-tapp{0%,100%{opacity:.55;}50%{opacity:1;}}
+.fin-light{position:absolute;width:280px;height:280px;margin:-140px 0 0 -140px;border-radius:50%;background:radial-gradient(circle,rgba(255,238,250,.95) 0,rgba(255,150,220,.55) 30%,rgba(150,110,255,.25) 55%,transparent 70%);opacity:0;transform:scale(.2);transition:opacity 1.2s ease,transform 1.6s ease;z-index:3;pointer-events:none;}
+.fin-light.on{opacity:1;transform:scale(1.7);}
+.fin-light.dim{opacity:.18;}
+.fin-p{position:absolute;font-size:18px;pointer-events:none;z-index:5;opacity:0;animation:fin-fly 2.7s ease-out forwards;}
+@keyframes fin-fly{0%{opacity:0;transform:translate(0,0) scale(.4) rotate(0);}15%{opacity:1;}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1) rotate(var(--r));}}
+
+/* miniature world */
+.fin-world{position:relative;width:min(80vw,300px,38vh);aspect-ratio:1;flex:0 0 auto;opacity:0;transform:translateY(60px) scale(.55);transition:opacity 1.8s ease,transform 2s cubic-bezier(.2,.8,.2,1);}
+.fin-world.show{opacity:1;transform:none;}
+.fin-islandsvg{width:100%;height:100%;display:block;overflow:visible;animation:fin-hover 6s ease-in-out infinite;}
+@keyframes fin-hover{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+#finTree{transform-box:fill-box;transform-origin:50% 100%;animation:fin-treepulse 2.6s ease-in-out infinite;}
+@keyframes fin-treepulse{0%,100%{transform:scale(1);}14%{transform:scale(1.05);}28%{transform:scale(1);}42%{transform:scale(1.035);}70%{transform:scale(1);}}
+.fin-halo{transform-box:fill-box;transform-origin:center;animation:fin-halo 2.6s ease-in-out infinite;transition:opacity .6s;}
+@keyframes fin-halo{0%,100%{opacity:.55;}14%{opacity:.95;}28%{opacity:.6;}42%{opacity:.85;}70%{opacity:.55;}}
+.fin-world.glow .fin-halo{opacity:1;}
+#finTreeHit{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.fin-path{stroke-dasharray:6 8;animation:fin-dash 6s linear infinite;}
+@keyframes fin-dash{to{stroke-dashoffset:-56;}}
+.fin-life{position:absolute;inset:0;pointer-events:none;}
+.fin-ff{position:absolute;width:5px;height:5px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 8px 2px rgba(255,226,140,.65);opacity:0;animation:fin-ff 5.5s ease-in-out infinite;}
+@keyframes fin-ff{0%{opacity:0;transform:translate(0,0);}30%{opacity:.95;}60%{opacity:.4;transform:translate(var(--fx),var(--fy));}100%{opacity:0;transform:translate(calc(var(--fx)*1.5),calc(var(--fy)*.3));}}
+.fin-bf{position:absolute;width:20px;height:16px;animation:fin-bfly 9s ease-in-out infinite;}
+@keyframes fin-bfly{0%,100%{transform:translate(0,0) rotate(0);}25%{transform:translate(var(--ax),var(--ay)) rotate(12deg);}50%{transform:translate(calc(var(--ax)*-.6),calc(var(--ay)*1.4)) rotate(-10deg);}75%{transform:translate(calc(var(--ax)*.4),calc(var(--ay)*-.5)) rotate(8deg);}}
+.fin-bf svg{width:100%;height:100%;display:block;animation:fin-flap .45s ease-in-out infinite alternate;}
+@keyframes fin-flap{from{transform:scaleX(1);}to{transform:scaleX(.45);}}
+.fin-ripple{position:absolute;left:50%;top:32%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:2px solid rgba(255,190,230,.85);opacity:0;animation:fin-rip 1.5s ease-out forwards;pointer-events:none;}
+@keyframes fin-rip{0%{opacity:.8;transform:scale(.3);}100%{opacity:0;transform:scale(4.2);}}
+.fin-up{position:absolute;left:50%;top:30%;font-size:16px;pointer-events:none;opacity:0;animation:fin-rise 2.3s ease-out forwards;}
+@keyframes fin-rise{0%{opacity:0;transform:translate(0,0) scale(.6);}20%{opacity:1;}100%{opacity:0;transform:translate(var(--ux),-110px) scale(1);}}
+
+/* message + completion */
+.fin-msg{flex:0 0 auto;width:100%;max-width:340px;text-align:center;margin-top:10px;}
+.fin-msg p{opacity:0;transform:translateY(8px);transition:opacity 1.6s ease,transform 1.6s ease,text-shadow 1s ease;}
+.fin-msg p.show{opacity:1;transform:none;}
+.fin-m1{font-size:1.15rem;line-height:1.65;font-style:italic;}
+.fin-m2{margin-top:16px;font-size:1.05rem;letter-spacing:.14em;color:#ffd6e8;}
+.fin-m3{margin-top:4px;font-size:.88rem;color:#d9c8f5;}
+.fin-msg.glow .fin-m1{text-shadow:0 0 14px rgba(255,170,220,.9);}
+.fin-done{flex:0 0 auto;width:100%;max-width:340px;text-align:center;margin-top:22px;opacity:0;transform:translateY(10px);transition:opacity 1.4s ease,transform 1.4s ease;pointer-events:none;}
+.fin-done.show{opacity:1;transform:none;pointer-events:auto;}
+.fin-d1{font-size:.98rem;letter-spacing:.08em;}
+.fin-d2{margin-top:6px;font-size:.88rem;color:#e8d7fa;font-style:italic;}
+.fin-d3{margin-top:2px;font-size:.72rem;color:#b9a5dc;text-transform:uppercase;letter-spacing:.12em;}
+.fin-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;}
+.fin-btn{padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fbeff6;font-size:.8rem;font-family:inherit;text-decoration:none;cursor:pointer;}
+.fin-btn.main{border:none;background:linear-gradient(120deg,#e9a8b8,#b48cff);color:#1d1233;font-weight:700;box-shadow:0 0 18px rgba(233,168,184,.35);}
+@media (prefers-reduced-motion:reduce){
+  .fin *{animation:none !important;}
+  .fin-p,.fin-ff,.fin-bf,.fin-up,.fin-ripple{display:none !important;}
+  .fin-world{transform:none !important;}
+}
 
 /* identity picker */
 .idpick{position:fixed;inset:0;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
@@ -134,11 +206,94 @@ body{font-family:var(--font);background:linear-gradient(180deg,var(--sky),var(--
     </div>
   </div>
 </div>
-<div class="giftReveal" id="giftReveal">
-  <div class="gr-stage">
-    <div class="gr-box" id="grBox">🎁</div>
-    <div class="gr-text" id="grText"></div>
-    <a class="gr-enter" id="grEnter" href="index.html">✨ Enter Our Space</a>
+<div class="fin" id="fin" role="dialog" aria-label="Our Little World — final gift">
+  <button class="fin-x" id="finX" type="button" aria-label="Close">✕</button>
+  <div class="fin-stars" id="finStars"></div>
+  <div class="fin-intro" id="finIntro"></div>
+  <div class="fin-light" id="finLight"></div>
+
+  <div class="fin-gift" id="finGift">
+    <div class="fin-glow"></div>
+    <svg class="fin-giftsvg" id="finGiftSvg" viewBox="0 0 200 200" aria-label="Giant gift box">
+      <defs>
+        <linearGradient id="fgBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a98aff"/><stop offset="1" stop-color="#5f43b8"/></linearGradient>
+        <linearGradient id="fgLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a8ff"/><stop offset="1" stop-color="#8663e6"/></linearGradient>
+        <linearGradient id="fgRib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3ee"/><stop offset=".55" stop-color="#ffa9d3"/><stop offset="1" stop-color="#e7a5a8"/></linearGradient>
+      </defs>
+      <ellipse cx="100" cy="188" rx="64" ry="8" fill="rgba(0,0,0,.35)"/>
+      <rect x="40" y="92" width="120" height="88" rx="8" fill="url(#fgBody)"/>
+      <rect x="45" y="98" width="6" height="76" rx="3" fill="rgba(255,255,255,.16)"/>
+      <rect class="fin-rib" x="91" y="96" width="18" height="84" fill="url(#fgRib)"/>
+      <g id="finLid">
+        <rect x="32" y="66" width="136" height="32" rx="8" fill="url(#fgLid)"/>
+        <rect x="38" y="70" width="40" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+        <rect class="fin-rib" x="91" y="66" width="18" height="32" fill="url(#fgRib)"/>
+        <g id="finBow">
+          <ellipse cx="78" cy="54" rx="23" ry="13" transform="rotate(-24 78 54)" fill="url(#fgRib)"/>
+          <ellipse cx="122" cy="54" rx="23" ry="13" transform="rotate(24 122 54)" fill="url(#fgRib)"/>
+          <path d="M96 66 L82 90 L95 84 Z" fill="#ffa9d3"/>
+          <path d="M104 66 L118 90 L105 84 Z" fill="#ffa9d3"/>
+          <circle cx="100" cy="62" r="9" fill="#ffc2de"/>
+        </g>
+      </g>
+      <circle cx="58" cy="140" r="2" fill="#fff" opacity=".7"/><circle cx="142" cy="120" r="1.6" fill="#fff" opacity=".6"/><circle cx="130" cy="160" r="2" fill="#ffd6e8" opacity=".7"/>
+    </svg>
+    <div class="fin-tap" id="finTap">Tap to open your final gift 💝</div>
+  </div>
+
+  <div class="fin-burst" id="finBurst"></div>
+
+  <div class="fin-main" id="finMain">
+    <div class="fin-world" id="finWorld">
+      <svg class="fin-islandsvg" viewBox="0 0 300 300" aria-label="Miniature world with a glowing heart tree">
+        <defs>
+          <radialGradient id="fwHalo"><stop offset="0" stop-color="#ff9ccf" stop-opacity=".75"/><stop offset=".6" stop-color="#b48cff" stop-opacity=".25"/><stop offset="1" stop-color="#b48cff" stop-opacity="0"/></radialGradient>
+          <linearGradient id="fwRock" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7b5a98"/><stop offset="1" stop-color="#2f2150"/></linearGradient>
+          <linearGradient id="fwGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6ecc6"/><stop offset="1" stop-color="#63b793"/></linearGradient>
+          <linearGradient id="fwCrown" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3dc"/><stop offset=".6" stop-color="#ff8cc6"/><stop offset="1" stop-color="#b48cff"/></linearGradient>
+          <linearGradient id="fwPath" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffe3a8"/><stop offset="1" stop-color="#ffb3dc"/></linearGradient>
+        </defs>
+        <circle class="fin-halo" cx="150" cy="105" r="118" fill="url(#fwHalo)"/>
+        <path d="M38 192 Q56 252 150 286 Q244 252 262 192 Z" fill="url(#fwRock)"/>
+        <path d="M110 250 L104 276 L124 262 Z M190 252 L198 278 L176 264 Z" fill="#3b2a63" opacity=".7"/>
+        <ellipse cx="150" cy="192" rx="114" ry="32" fill="url(#fwGrass)"/>
+        <path class="fin-path" d="M112 222 Q146 206 134 192 Q128 182 150 176" fill="none" stroke="url(#fwPath)" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+        <g id="finFlowers">
+          <circle cx="66" cy="196" r="4" fill="#ff8cc6"/><circle cx="66" cy="196" r="1.5" fill="#fff3b0"/>
+          <circle cx="84" cy="208" r="3.5" fill="#c9a8ff"/><circle cx="84" cy="208" r="1.3" fill="#fff3b0"/>
+          <circle cx="104" cy="214" r="3" fill="#ffb3dc"/><circle cx="196" cy="214" r="3.5" fill="#ff8cc6"/>
+          <circle cx="214" cy="204" r="4" fill="#c9a8ff"/><circle cx="214" cy="204" r="1.5" fill="#fff3b0"/>
+          <circle cx="234" cy="194" r="3.5" fill="#ffb3dc"/><circle cx="178" cy="222" r="3" fill="#c9a8ff"/>
+          <circle cx="92" cy="186" r="3" fill="#ffb3dc"/><circle cx="208" cy="186" r="3" fill="#ff8cc6"/>
+        </g>
+        <g id="finTree">
+          <path d="M145 192 Q139 152 150 122 Q161 152 155 192 Z" fill="#7a4d6a"/>
+          <path d="M150 150 Q132 140 124 124 M150 144 Q168 134 176 118" fill="none" stroke="#7a4d6a" stroke-width="4" stroke-linecap="round"/>
+          <path d="M150 156 C 88 114, 76 58, 116 44 C 138 37, 150 54, 150 64 C 150 54, 162 37, 184 44 C 224 58, 212 114, 150 156 Z" fill="url(#fwCrown)"/>
+          <path d="M128 60 Q118 70 122 84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="124" cy="78" r="2.5" fill="#fff3b0"/><circle cx="170" cy="70" r="2" fill="#fff"/><circle cx="150" cy="110" r="2.4" fill="#fff3b0"/><circle cx="182" cy="96" r="2" fill="#fff"/><circle cx="130" cy="104" r="1.8" fill="#fff"/>
+        </g>
+        <circle id="finTreeHit" cx="150" cy="96" r="84" fill="transparent"/>
+      </svg>
+      <div class="fin-life" id="finLife"></div>
+    </div>
+
+    <div class="fin-msg" id="finMsg">
+      <p class="fin-m1" id="finM1">“No matter how many worlds we build… my favourite world will always be the one with you.” 💗</p>
+      <p class="fin-m2" id="finM2">Our Little World</p>
+      <p class="fin-m3" id="finM3">Made with love, just for you.</p>
+    </div>
+
+    <div class="fin-done" id="finDone">
+      <div class="fin-d1">🌎 OUR LITTLE WORLD 🌎</div>
+      <div class="fin-d2">Every little step brought us here.</div>
+      <div class="fin-d3">The journey is complete.</div>
+      <div class="fin-btns">
+        <button class="fin-btn main" id="finReplay" type="button">🎁 See Our Surprise Again</button>
+        <a class="fin-btn" href="index.html">💬 Messages</a>
+        <button class="fin-btn" id="finClose" type="button">Close</button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="wrap">
@@ -184,7 +339,7 @@ body{font-family:var(--font);background:linear-gradient(180deg,var(--sky),var(--
       <div>🔥<b id="qStreak">0</b>Streak</div>
       <div>📅<b id="qDays">0</b>Active days</div>
     </div>
-    <div class="card gift" id="giftBox"></div>
+    <div class="card gift" id="giftBox"><div class="e">🎁</div><div>Loading…</div></div>
   </main>
 
   <main id="achTab" style="display:none">
@@ -275,7 +430,7 @@ function fresh(){return{
   pool:{hasTool:false,progress:0,built:false},
   furn:{hasTool:false,progress:0,built:false},
   pet:{hasPet:false,feeds:0,grown:false,hasDog:false,progress:0,built:false},
-  spent:{},gifts:[],ach:{},
+  spent:{},gifts:[],ach:{},finale:null,
   streak:{current:0,longest:0,activeDays:0,last:null}
 };}
 let S=fresh();
@@ -379,6 +534,7 @@ function render(){
   renderTurn();
   renderGift();
   renderAchTab();
+  maybeAutoFinale();
   save();
 }
 
@@ -520,32 +676,159 @@ actBtn().onclick=async()=>{
   busy=false;render();
 };
 
-/* ===== gift box (locked until CFG.giftDate) ===== */
-function renderGift(){
-  const box=document.getElementById('giftBox');
-  const now=new Date(),target=new Date(CFG.giftDate+'T00:00:00');
-  if(now>=target){ box.innerHTML='<div class="e">🎁</div><div>The final gift is ready</div><small>Tap to open it 🤍</small>'; box.style.cursor='pointer'; box.onclick=openFinalGift; }
-  else { box.innerHTML='<div class="e">🎁🔒</div><div>The final gift is waiting…</div><small>Some things are worth waiting for…</small>'; box.onclick=null; box.style.cursor='default'; }
-}
+/* ===== GRAND FINALE =====
+   Unlocked only when the real final level is complete (S.stage>=7) AND CFG.giftDate has arrived.
+   First play: records the completion ONCE (S.finale) and marks this player as having seen it.
+   Replay: purely visual — never writes to state, logs, or the database. */
+const fe=id=>document.getElementById(id);
+function finUnlocked(){ return S.stage>=7 && new Date()>=new Date(CFG.giftDate+'T00:00:00'); }
+function finReduced(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-async function openFinalGift(){
-  const overlay=document.getElementById('giftReveal'),box=document.getElementById('grBox'),
-        text=document.getElementById('grText'),enter=document.getElementById('grEnter');
-  overlay.classList.add('show');
-  box.className='gr-box shake';box.textContent='🎁';
-  await sleep(700);
-  box.className='gr-box open';box.textContent='✨';
-  await sleep(600);
-  const lines=['You made it.','But this wasn\u2019t really about finishing a game.','It was about everything you built along the way.'];
-  for(const line of lines){
-    text.textContent=line;text.classList.add('show');
-    await sleep(2300);
-    text.classList.remove('show');
-    await sleep(500);
+
+function renderGift(){
+  const box=fe('giftBox');
+  box.setAttribute('role','button');
+  if(!finUnlocked()){
+    box.innerHTML='<div class="e">🎁🔒</div><div>The final gift is waiting…</div><small>Some things are worth waiting for…</small>';
+    box.onclick=null; box.style.cursor='default'; return;
   }
-  text.textContent='';
-  enter.style.display='inline-block';
+  box.style.cursor='pointer';
+  if(S.finale){
+    box.innerHTML='<div class="e">🎁</div><div>🎁 See Our Surprise Again</div><small>Tap to watch the finale again 🤍</small>';
+    box.onclick=()=>startFinale('replay');
+  } else {
+    box.innerHTML='<div class="e">🎁</div><div>Open My Surprise 🎁</div><small>Tap to open your final gift 🤍</small>';
+    box.onclick=()=>startFinale('first');
+  }
 }
+
+let finRun=0, finOpen=false, finOpening=false, finAuto=false, finTapResolve=null, finTreeReady=false, finTreeLock=false, finBuilt=false;
+const FIN_CANCEL={};
+function maybeAutoFinale(){
+  if(finAuto||finOpen||!finUnlocked()) return;
+  if(S.finale&&S.finale.seen&&S.finale.seen[ME]) return;
+  finAuto=true;
+  setTimeout(()=>{ if(!finOpen&&finUnlocked()) startFinale('first'); },900);
+}
+async function recordFinale(){
+  /* re-read remote first so two devices can't both create a completion record */
+  try{
+    const rows=await api('GET','world_game_state?id=eq.1&select=state');
+    if(rows&&rows[0]&&rows[0].state&&rows[0].state.finale) S.finale=rows[0].state.finale;
+  }catch(e){}
+  const isNew=!S.finale;
+  if(isNew) S.finale={at:new Date().toISOString(),by:ME,seen:{}};
+  if(!S.finale.seen) S.finale.seen={};
+  if(!isNew && S.finale.seen[ME]) return;
+  S.finale.seen[ME]=true;
+  if(isNew) logEvent(ME,'finale','🎁 Grand Finale — our little world is complete');
+  await save();
+}
+function finBuild(){
+  if(finBuilt) return; finBuilt=true;
+  let st=''; for(let i=0;i<28;i++){ st+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*85).toFixed(1)+'%;animation-delay:'+(Math.random()*3).toFixed(2)+'s"></i>'; }
+  fe('finStars').innerHTML=st;
+  const wing=(a,b)=>'<svg viewBox="0 0 20 16"><ellipse cx="6" cy="6" rx="5" ry="6" fill="'+a+'"/><ellipse cx="14" cy="6" rx="5" ry="6" fill="'+a+'"/><ellipse cx="7" cy="12" rx="3.5" ry="4" fill="'+b+'"/><ellipse cx="13" cy="12" rx="3.5" ry="4" fill="'+b+'"/><rect x="9.4" y="3" width="1.2" height="11" rx=".6" fill="#6b4f86"/></svg>';
+  const bfs=[[12,30,'#ffd36e','#ff9ccf',22,-18],[80,22,'#ffb3dc','#c9a8ff',-24,16],[20,66,'#ffd36e','#ffb3dc',18,14],[74,62,'#ffe08a','#ff9ccf',-16,-20]];
+  let life=bfs.map((b,i)=>'<div class="fin-bf" style="left:'+b[0]+'%;top:'+b[1]+'%;--ax:'+b[4]+'px;--ay:'+b[5]+'px;animation-delay:-'+(i*2.1)+'s">'+wing(b[2],b[3])+'</div>').join('');
+  for(let i=0;i<10;i++){ life+='<div class="fin-ff" style="left:'+(10+Math.random()*80).toFixed(0)+'%;top:'+(18+Math.random()*60).toFixed(0)+'%;--fx:'+(Math.random()*30-15).toFixed(0)+'px;--fy:'+(-8-Math.random()*22).toFixed(0)+'px;animation-delay:-'+(Math.random()*5).toFixed(1)+'s"></div>'; }
+  fe('finLife').innerHTML=life;
+}
+function finResetDom(){
+  ['finGift'].forEach(i=>fe(i).className='fin-gift');
+  fe('finTap').className='fin-tap';
+  fe('finLight').className='fin-light';
+  fe('finWorld').className='fin-world';
+  fe('finMsg').className='fin-msg';
+  ['finM1','finM2','finM3'].forEach(i=>fe(i).classList.remove('show'));
+  fe('finDone').className='fin-done';
+  fe('finIntro').className='fin-intro'; fe('finIntro').textContent='';
+  fe('finBurst').innerHTML=''; fe('finMain').scrollTop=0;
+  finOpening=false; finTreeReady=false; finTapResolve=null;
+}
+function finCancel(){ finRun++; if(finTapResolve){ const r=finTapResolve; finTapResolve=null; r(); } }
+async function startFinale(mode){
+  if(finOpen||!finUnlocked()) return;
+  finOpen=true; finBuild(); finResetDom();
+  document.body.style.overflow='hidden';
+  const f=fe('fin'); f.classList.add('show'); void f.offsetWidth; f.classList.add('on');
+  if(mode==='first'){ recordFinale().catch(e=>console.log('finale save err',e)); }
+  runFinale(++finRun);
+}
+function closeFinale(){
+  if(!finOpen) return;
+  finCancel(); finOpen=false;
+  const f=fe('fin'); f.classList.remove('on');
+  document.body.style.overflow='';
+  setTimeout(()=>{ if(!finOpen) f.classList.remove('show'); },1100);
+}
+async function finType(node,text,my){
+  node.classList.add('show');
+  if(finReduced()){ node.textContent=text; return; }
+  const chars=Array.from(text); node.textContent='';
+  for(let i=1;i<=chars.length;i++){ if(my!==finRun) throw FIN_CANCEL; node.textContent=chars.slice(0,i).join(''); await sleep(55); }
+}
+function finBurst(){
+  if(finReduced()) return;
+  const r=fe('finGiftSvg').getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height*.38;
+  const em=['💗','🌸','✨','💜','🌷','🌹','🦋'], box=fe('finBurst'); let h='';
+  for(let i=0;i<26;i++){
+    const a=Math.random()*Math.PI*2, d=90+Math.random()*190;
+    h+='<span class="fin-p" style="left:'+cx.toFixed(0)+'px;top:'+cy.toFixed(0)+'px;--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d*.8-70).toFixed(0)+'px;--r:'+((Math.random()*160-80)|0)+'deg;animation-delay:'+(Math.random()*.5).toFixed(2)+'s">'+em[i%em.length]+'</span>';
+  }
+  box.innerHTML=h; setTimeout(()=>{ box.innerHTML=''; },3500);
+}
+async function runFinale(my){
+  const wait=async ms=>{ await sleep(ms); if(my!==finRun) throw FIN_CANCEL; };
+  const gift=fe('finGift'), light=fe('finLight');
+  try{
+    await wait(900);
+    await finType(fe('finIntro'),'Wait… I have one last surprise for you. 💜',my);
+    await wait(1800);
+    fe('finIntro').classList.remove('show'); await wait(1000);
+    gift.classList.add('show'); await wait(1500);
+    gift.classList.add('shake'); await wait(1000); gift.classList.remove('shake'); await wait(600);
+    gift.classList.add('shake'); await wait(1000); gift.classList.remove('shake'); await wait(300);
+    fe('finTap').classList.add('show');
+    await new Promise(res=>{ finTapResolve=res; });           /* waits for the player's tap */
+    if(my!==finRun) throw FIN_CANCEL;
+    fe('finTap').classList.remove('show');
+    const r=fe('finGiftSvg').getBoundingClientRect();
+    light.style.left=(r.left+r.width/2)+'px'; light.style.top=(r.top+r.height*.4)+'px';
+    gift.classList.add('loose'); await wait(1000);
+    gift.classList.add('open'); light.classList.add('on'); await wait(800);
+    finBurst(); await wait(1500);
+    fe('finWorld').classList.add('show'); gift.classList.add('fade'); light.classList.add('dim'); await wait(2400);
+    fe('finM1').classList.add('show'); await wait(2800);
+    fe('finM2').classList.add('show'); await wait(1300);
+    fe('finM3').classList.add('show'); await wait(1800);
+    finTreeReady=true;
+    fe('finDone').classList.add('show');
+    fe('finMain').scrollTo({top:fe('finMain').scrollHeight,behavior:finReduced()?'auto':'smooth'});
+  }catch(e){
+    if(e===FIN_CANCEL) return;
+    console.warn('finale effect failed, showing fallback',e);   /* graceful fallback: still show message + completion */
+    fe('finWorld').classList.add('show'); ['finM1','finM2','finM3'].forEach(i=>fe(i).classList.add('show')); fe('finDone').classList.add('show'); finTreeReady=true;
+  }
+}
+function finTouchTree(){
+  if(!finTreeReady||finTreeLock) return;
+  finTreeLock=true; setTimeout(()=>{finTreeLock=false;},800);
+  const w=fe('finWorld'), m=fe('finMsg');
+  w.classList.add('glow'); m.classList.add('glow'); setTimeout(()=>{ w.classList.remove('glow'); m.classList.remove('glow'); },1300);
+  if(finReduced()) return;
+  const rip=document.createElement('div'); rip.className='fin-ripple'; w.appendChild(rip); setTimeout(()=>rip.remove(),1600);
+  const em=['💗','🦋','✨','💜','🦋','💗'];
+  em.forEach((e,i)=>{ const s=document.createElement('span'); s.className='fin-up'; s.textContent=e; s.style.setProperty('--ux',((Math.random()*90-45)|0)+'px'); s.style.marginLeft=((Math.random()*60-30)|0)+'px'; s.style.animationDelay=(i*0.12)+'s'; w.appendChild(s); setTimeout(()=>s.remove(),2700); });
+}
+fe('finGiftSvg').addEventListener('click',()=>{ if(!finTapResolve||finOpening) return; finOpening=true; const r=finTapResolve; finTapResolve=null; r(); });
+fe('finTreeHit').addEventListener('click',finTouchTree);
+fe('finX').addEventListener('click',closeFinale);
+fe('finClose').addEventListener('click',closeFinale);
+fe('finReplay').addEventListener('click',()=>{        /* replay = presentation only: no save(), no logEvent() */
+  if(!finOpen||!fe('finDone').classList.contains('show')) return;
+  finCancel(); finResetDom(); runFinale(++finRun);
+});
 
 /* ===== achievements tab ===== */
 function renderAchTab(){
