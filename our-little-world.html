@@ -417,8 +417,7 @@ const CFG={
   poolCost:70, poolClicks:12, poolReward:2,
   furnCost:55, furnClicks:12, furnReward:3,
   puppyCost:70, feedsNeeded:18, feedReward:3,
-  doghouseCost:35, doghouseClicks:8, doghouseReward:2,
-  giftDate:'2026-11-20'
+  doghouseCost:35, doghouseClicks:8, doghouseReward:2
 };
 function fresh(){return{
   stage:0,coins:60,xp:0,level:1,totalClicks:0,
@@ -677,11 +676,11 @@ actBtn().onclick=async()=>{
 };
 
 /* ===== GRAND FINALE =====
-   Unlocked only when the real final level is complete (S.stage>=7) AND CFG.giftDate has arrived.
+   Unlocked only when the real final level is complete (S.stage>=7) — no date gate.
    First play: records the completion ONCE (S.finale) and marks this player as having seen it.
    Replay: purely visual — never writes to state, logs, or the database. */
 const fe=id=>document.getElementById(id);
-function finUnlocked(){ return S.stage>=7 && new Date()>=new Date(CFG.giftDate+'T00:00:00'); }
+function finUnlocked(){ return S.stage>=7; }   /* unlocks the moment the world is 100% complete */
 function finReduced(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
