@@ -451,6 +451,8 @@ html[data-custom-bubble] .msgrow.me .bubble{background:linear-gradient(160deg,rg
 .mg-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mg-sec .row{display:flex;gap:10px;margin-top:12px}.mg-sec .row button{flex:1;min-height:46px}
 .mg-empty{text-align:center;color:var(--lg-muted);font-size:13px;padding:10px}
+#mgHot{position:absolute;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:170px;height:58px;transform:translateX(-50%);border-radius:30px;z-index:5;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;background:radial-gradient(closest-side,hsla(38,85%,72%,.07),transparent);transition:background .2s}
+#mgHot.hit{background:radial-gradient(closest-side,hsla(38,85%,72%,.2),transparent)}
 </style>
 </head>
 <body>
@@ -2065,16 +2067,24 @@ if(savedSessionUser && USERS[savedSessionUser]){
   };
   /* single realtime listener for the whole page */
   var TOKEN=null, mgOpen=false;
-  sb.channel('room-management').on('postgres_changes',{event:'INSERT',schema:'public',table:'management_announcements'},function(pl){
+  try{ sb.channel('room-management').on('postgres_changes',{event:'INSERT',schema:'public',table:'management_announcements'},function(pl){
     if(inChat()) place(pl.new);
     if(mgOpen) loadHistory();
-  }).subscribe();
+  }).subscribe(); }catch(err){ console.warn('management realtime unavailable',err); }
 
-  /* ---------- hidden entry: double-click / double-tap the wordmark ---------- */
+  /* ---------- hidden entry: double-tap a quiet zone at the bottom of the lock screen ---------- */
   var last=0;
   function wire(){
-    var wm=document.querySelector('.wordmark'); if(!wm||wm.dataset.mg) return; wm.dataset.mg='1';
-    wm.addEventListener('pointerup',function(){ var n=Date.now(); if(n-last<380){ last=0; openPanel(); } else last=n; });
+    var ls=$('lockScreen'); if(!ls||$('mgHot')) return;
+    var z=mk('div'); z.id='mgHot'; z.setAttribute('aria-hidden','true');
+    ls.appendChild(z);
+    var t=0;
+    z.addEventListener('pointerup',function(e){
+      var n=Date.now();
+      if(n-last<450){ last=0; z.classList.remove('hit'); e.preventDefault(); openPanel(); }
+      else{ last=n; z.classList.add('hit'); clearTimeout(t); t=setTimeout(function(){ z.classList.remove('hit'); },450); }
+    });
+    z.addEventListener('dblclick',function(e){ e.preventDefault(); last=0; openPanel(); });
   }
   function openPanel(){
     if($('mgPanel')) return;
@@ -2145,7 +2155,8 @@ if(savedSessionUser && USERS[savedSessionUser]){
     };
     preview(); loadHistory();
   }
-  wire(); setTimeout(wire,1500);
+  wire(); setTimeout(wire,800);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire);
 })();
 </script>
 </body>
