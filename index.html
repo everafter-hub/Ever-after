@@ -421,6 +421,36 @@ html[data-custom-bubble] .msgrow.me .bubble{background:linear-gradient(160deg,rg
 .bubble.challenge button{margin-top:8px;min-height:38px;padding:0 18px}
 @media (prefers-reduced-motion:reduce){#teddy.bye svg{animation:none;opacity:0}}
 .lg-toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;max-width:88vw;padding:11px 18px;border-radius:22px;font-weight:600;font-size:13px;color:var(--lg-text);background:var(--lg-fill-strong);border:1px solid var(--lg-border);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);animation:lgPop .35s var(--lg-ease)}
+/* ---- management ---- */
+.mg-card{align-self:center;width:min(420px,92%);box-sizing:border-box;margin:10px 0;padding:16px 18px 14px;border-radius:30px;text-align:center;color:var(--lg-text);background:linear-gradient(155deg,rgba(255,255,255,.24),rgba(255,255,255,0) 42%),var(--lg-fill-strong);border:1px solid var(--lg-border);box-shadow:inset 0 1px 0 var(--lg-hi),0 16px 36px -14px var(--lg-shadow);-webkit-backdrop-filter:var(--lg-blur-soft);backdrop-filter:var(--lg-blur-soft);animation:lgPop .4s var(--lg-ease) both}
+.mg-card svg{width:22px;height:22px;color:var(--lg-accent)}
+.mg-card .mg-l{display:block;margin-top:2px;font-size:10.5px;font-weight:800;letter-spacing:.2em;color:var(--lg-text2)}
+.mg-card .mg-k{display:inline-block;margin:8px 0 2px;padding:3px 12px;border-radius:14px;font-size:11.5px;font-weight:700;background:rgba(255,255,255,.16);border:1px solid var(--lg-border)}
+.mg-card h3{margin:6px 0 4px;font-family:var(--lg-serif);font-size:25px;line-height:1.1;font-weight:700}
+.mg-card p{margin:0;line-height:1.5;color:var(--lg-text2);font-weight:500;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.mg-card time{display:block;margin-top:10px;font-size:11px;color:var(--lg-muted)}
+.mg-card button.primary{margin-top:12px;min-height:44px;padding:0 26px}
+.mg-card .mg-demo{display:block;margin-top:8px;font-size:11.5px;color:var(--lg-muted)}
+#mgPanel{position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.35);-webkit-backdrop-filter:var(--lg-blur-soft);backdrop-filter:var(--lg-blur-soft)}
+#mgPanel .mgp{width:min(330px,100%);padding:22px;border-radius:32px;background:linear-gradient(155deg,rgba(255,255,255,.22),rgba(255,255,255,0) 42%),var(--lg-fill-strong);border:1px solid var(--lg-border);box-shadow:inset 0 1px 0 var(--lg-hi),0 24px 50px -16px var(--lg-shadow);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);color:var(--lg-text)}
+#mgPanel input{width:100%;box-sizing:border-box;padding:13px 16px;font-size:16px;text-align:center}
+#mgPanel .mge{min-height:18px;margin:8px 0;font-size:12.5px;font-weight:600;color:var(--lg-err);text-align:center}
+#mgPanel .row{display:flex;gap:10px}#mgPanel .row button{flex:1;min-height:46px}
+#mgmtScreen{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;color:var(--lg-text);background:linear-gradient(rgba(var(--lg-scrim),.3),rgba(var(--lg-scrim),.3)),var(--lg-thumb,linear-gradient(160deg,var(--lg-tint1),var(--lg-tint2))) center/cover no-repeat;padding-top:env(safe-area-inset-top,0px)}
+#mgmtScreen header{margin:0;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:0 0 28px 28px;background:linear-gradient(155deg,rgba(255,255,255,.22),rgba(255,255,255,0) 40%),var(--lg-fill);border:1px solid var(--lg-border);border-top:none;-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur)}
+#mgmtScreen header b{font-family:var(--lg-serif);font-size:24px;letter-spacing:.04em}#mgmtScreen header small{display:block;font-size:10.5px;letter-spacing:.14em;color:var(--lg-text2);font-weight:700}
+#mgmtScreen header button{margin-left:auto;min-height:40px;padding:0 16px}
+#mgBody{flex:1;overflow-y:auto;padding:14px max(14px,calc((100% - 560px)/2)) calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.mg-sec{padding:16px;border-radius:28px;background:linear-gradient(155deg,rgba(255,255,255,.2),rgba(255,255,255,0) 42%),var(--lg-fill);border:1px solid var(--lg-border);box-shadow:inset 0 1px 0 var(--lg-hi)}
+.mg-sec h4{margin:0 0 4px;font-size:11px;letter-spacing:.18em;font-weight:800;color:var(--lg-text2)}
+.mg-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.mg-quick button{min-height:46px;padding:8px 10px;border-radius:18px;border:1px solid var(--lg-border);background:rgba(255,255,255,.14);color:var(--lg-text);font:600 12.5px var(--lg-ui);text-align:left}
+.mg-quick button small{display:block;font-weight:500;opacity:.7;font-size:10.5px}
+.mg-sec select,.mg-sec textarea,.mg-sec input{width:100%;box-sizing:border-box;margin-top:8px;padding:12px 14px;border-radius:18px;border:1px solid var(--lg-border);background:rgba(255,255,255,.13);color:var(--lg-text);font:500 15px var(--lg-ui);outline:none;color-scheme:var(--lg-scheme)}
+.mg-sec textarea{min-height:90px;resize:vertical}.mg-sec option{color:#111}
+.mg-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mg-sec .row{display:flex;gap:10px;margin-top:12px}.mg-sec .row button{flex:1;min-height:46px}
+.mg-empty{text-align:center;color:var(--lg-muted);font-size:13px;padding:10px}
 </style>
 </head>
 <body>
@@ -1963,6 +1993,159 @@ if(savedSessionUser && USERS[savedSessionUser]){
     if(!inited){ inited=true; try{ buildTeddy(); wireStatus(); wireChallenges(); loadStatuses(); }catch(err){ console.warn('features init failed',err); } }
     return r;
   };
+})();
+</script>
+<script id="lg-mgmt">
+/* ================= EVER AFTER — MANAGEMENT (hidden, server-verified) ================= */
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+  function toast(t){ var d=mk('div','lg-toast',t); d.setAttribute('role','status'); document.body.appendChild(d); setTimeout(function(){ d.remove(); },3400); }
+  var KINDS={update:'✨ New Update',maintenance:'🛠️ Maintenance',feature:'🚀 New Feature',server:'🖥️ Server Status',notice:'⚠️ Service Notice',bugfix:'🔧 Bug Fix',general:'📢 Announcement'};
+  var QUICK=[
+    ['Send Notice','Official announcement','general','Notice','','none'],
+    ['Maintenance','Send a maintenance notice','maintenance','Scheduled Maintenance','Ever After may be temporarily unavailable while maintenance is being completed.','none'],
+    ['Server Status','Write verified service info','server','Server Status','','none'],
+    ['Reboot Notice','Demo prompt, no real reboot','server','Server Performance Notice','Server performance may be getting low. Please reboot the server when convenient.','reboot'],
+    ['New Feature','Announce a feature','feature','New Feature Available','A new feature is now available in Ever After.','none'],
+    ['Update Completed','New update released','update','New Update Available','A new update has been released for Ever After.','ok'],
+    ['Maintenance Done','Maintenance completed','maintenance','Maintenance Completed','Scheduled maintenance has been completed.','ok'],
+    ['Service Restored','Back to normal','notice','Service Restored','Ever After services are operating normally again.','ok'],
+    ['Bug Fix','Issue fixed','bugfix','Bug Fix Completed','A recent issue has been fixed.','none']
+  ];
+  var SHIELD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>';
+
+  /* ---------- announcement card (plain text only; no read receipts of any kind) ---------- */
+  function card(a,preview){
+    var c=mk('div','mg-card'); c.setAttribute('role','article'); c.setAttribute('aria-label','Management announcement');
+    if(a.id){ c.dataset.aid=a.id; c.dataset.ts=new Date(a.created_at).getTime(); }
+    var ic=mk('div'); ic.innerHTML=SHIELD; c.appendChild(ic);
+    c.appendChild(mk('span','mg-l','MANAGEMENT'));
+    c.appendChild(mk('span','mg-k',KINDS[a.kind]||KINDS.general));
+    c.appendChild(mk('h3','',a.title||'Untitled')); c.appendChild(mk('p','',a.message||''));
+    if(a.action==='reboot'||a.action==='ok'){
+      var b=mk('button','primary',a.action==='reboot'?'REBOOT':'OKAY'); b.type='button';
+      var f=mk('span','mg-demo',a.action==='reboot'?'Demo action — no server restart will happen.':''); f.setAttribute('aria-live','polite');
+      b.onclick=function(){
+        if(preview) return; b.disabled=true;
+        f.textContent=a.action==='reboot'?'Reboot request received (demo only). No server action was performed.':'Noted.';
+      };
+      c.appendChild(b); c.appendChild(f);
+    }
+    var t=mk('time','',preview?'Preview':new Date(a.created_at).toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}));
+    c.appendChild(t); return c;
+  }
+
+  /* ---------- show announcements inside the normal chat, centred, in time order ---------- */
+  function stamp(n){
+    var d=n.dataset||{}; if(d.aid) return +d.ts;
+    var m=d.id&&messageCache.get(d.id); return m?new Date(m.created_at).getTime():null;
+  }
+  function place(a){
+    var w=$('messages'); if(!w||w.querySelector('[data-aid="'+a.id+'"]')) return;
+    var c=card(a), t=new Date(a.created_at).getTime(), k=w.children, atEnd=w.scrollHeight-w.scrollTop-w.clientHeight<140, done=false;
+    for(var i=k.length-1;i>=0;i--){ var s=stamp(k[i]); if(s!=null&&s<=t){ k[i].after(c); done=true; break; } }
+    if(!done) w.insertBefore(c,w.firstChild);
+    if(atEnd) w.scrollTop=w.scrollHeight;
+  }
+  function inChat(){ try{ return !!currentUser&&$('chatScreen')&&!$('chatScreen').classList.contains('hidden'); }catch(e){ return false; } }
+  var inited=false;
+  async function loadIntoChat(){
+    for(var n=0;n<14&&!$('messages').querySelector('.msgrow,.bubble');n++) await new Promise(function(r){ setTimeout(r,300); });
+    var r=await sb.from('management_announcements').select('*').order('created_at',{ascending:true}).limit(60);
+    if(r.error){ console.warn('announcements unavailable (run mgmt.sql):',r.error.message); return; }
+    (r.data||[]).forEach(place);
+  }
+  var _en=window.enterChat;
+  window.enterChat=async function(){
+    var r=await _en.apply(this,arguments);
+    if(!inited){ inited=true; loadIntoChat(); }
+    return r;
+  };
+  /* single realtime listener for the whole page */
+  var TOKEN=null, mgOpen=false;
+  sb.channel('room-management').on('postgres_changes',{event:'INSERT',schema:'public',table:'management_announcements'},function(pl){
+    if(inChat()) place(pl.new);
+    if(mgOpen) loadHistory();
+  }).subscribe();
+
+  /* ---------- hidden entry: double-click / double-tap the wordmark ---------- */
+  var last=0;
+  function wire(){
+    var wm=document.querySelector('.wordmark'); if(!wm||wm.dataset.mg) return; wm.dataset.mg='1';
+    wm.addEventListener('pointerup',function(){ var n=Date.now(); if(n-last<380){ last=0; openPanel(); } else last=n; });
+  }
+  function openPanel(){
+    if($('mgPanel')) return;
+    var ov=mk('div'); ov.id='mgPanel';
+    ov.innerHTML='<form class="mgp" autocomplete="off"><input type="password" id="mgPw" autocomplete="off" aria-label="Password"><div class="mge" id="mgE" role="alert"></div><div class="row"><button type="button" class="ghost" id="mgX">Cancel</button><button type="submit" class="primary" id="mgGo">Continue</button></div></form>';
+    document.body.appendChild(ov); var pw=$('mgPw'); pw.focus();
+    function close(){ document.removeEventListener('keydown',esc); ov.remove(); }
+    function esc(e){ if(e.key==='Escape') close(); }
+    document.addEventListener('keydown',esc);
+    ov.addEventListener('click',function(e){ if(e.target===ov) close(); }); $('mgX').onclick=close;
+    var busy=false;
+    ov.querySelector('form').onsubmit=async function(e){
+      e.preventDefault(); if(busy||!pw.value) return; busy=true; $('mgGo').disabled=true; $('mgE').textContent='';
+      var r=await sb.rpc('management_login',{p:pw.value}); pw.value='';
+      busy=false; $('mgGo').disabled=false;
+      if(r.error){ $('mgE').textContent=/locked/.test(r.error.message)?'Too many attempts. Try again later.':/denied/.test(r.error.message)?'Incorrect password.':'Something went wrong. Try again.'; return; }
+      TOKEN=r.data; close(); openConsole();
+    };
+  }
+
+  /* ---------- management screen ---------- */
+  var form={};
+  async function loadHistory(){
+    var box=$('mgHist'); if(!box) return;
+    var r=await sb.from('management_announcements').select('*').order('created_at',{ascending:false}).limit(30);
+    box.innerHTML='';
+    if(r.error){ box.appendChild(mk('div','mg-empty','Could not load announcements.')); return; }
+    if(!r.data.length) box.appendChild(mk('div','mg-empty','No announcements yet.'));
+    r.data.forEach(function(a){ box.appendChild(card(a)); });
+  }
+  function readForm(){ return {kind:form.kind.value,title:form.title.value.trim(),message:form.msg.value.trim(),action:form.act.value}; }
+  function preview(){ var p=$('mgPrev'); p.innerHTML=''; var f=readForm(); p.appendChild(card({kind:f.kind,title:f.title||'Title',message:f.message||'Your message appears here.',action:f.action},true)); }
+  function exit(){
+    var t=TOKEN; TOKEN=null; mgOpen=false;
+    if(t) sb.rpc('management_logout',{tok:t}).then(function(){});
+    var s=$('mgmtScreen'); if(s) s.remove();
+  }
+  function openConsole(){
+    if($('mgmtScreen')) return; mgOpen=true;
+    var s=mk('div'); s.id='mgmtScreen'; s.setAttribute('role','dialog'); s.setAttribute('aria-label','Management console');
+    var q=QUICK.map(function(x,i){ return '<button type="button" data-q="'+i+'">'+x[0]+'<small>'+x[1]+'</small></button>'; }).join('');
+    var kinds=Object.keys(KINDS).map(function(k){ return '<option value="'+k+'">'+KINDS[k]+'</option>'; }).join('');
+    s.innerHTML='<header><div><b>MANAGEMENT</b><small>SYSTEM ADMINISTRATION • OFFICIAL</small></div><button class="ghost" id="mgExit" type="button">Exit</button></header>'+
+      '<div id="mgBody"><div class="mg-sec"><h4>MANAGEMENT CONSOLE · ADMIN ONLY</h4><div class="mg-quick">'+q+'</div></div>'+
+      '<div class="mg-sec"><h4>COMPOSE</h4><select id="mgKind" aria-label="Type">'+kinds+'</select><input id="mgTitle" maxlength="80" placeholder="Title" aria-label="Title"><textarea id="mgMsg" maxlength="600" placeholder="Message" aria-label="Message"></textarea>'+
+      '<div class="mg-two"><select id="mgAct" aria-label="Button"><option value="none">No button</option><option value="reboot">REBOOT (demo only)</option><option value="ok">OKAY</option></select><select id="mgExp" aria-label="Expiry"><option value="">Never expires</option><option value="24">Expires in 24h</option><option value="168">Expires in 7 days</option></select></div>'+
+      '<div id="mgPrev" style="margin-top:12px;display:flex;flex-direction:column"></div><div class="mge" id="mgMsgE" role="alert" style="min-height:18px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--lg-err)"></div>'+
+      '<div class="row"><button class="ghost" id="mgClear" type="button">Clear</button><button class="primary" id="mgPub" type="button">Publish</button></div></div>'+
+      '<div class="mg-sec"><h4>PUBLISHED</h4></div><div id="mgHist" style="display:flex;flex-direction:column"></div></div>';
+    document.body.appendChild(s);
+    form={kind:$('mgKind'),title:$('mgTitle'),msg:$('mgMsg'),act:$('mgAct'),exp:$('mgExp')};
+    ['input','change'].forEach(function(ev){ s.addEventListener(ev,function(e){ if(e.target.closest&&e.target.closest('.mg-sec')) preview(); }); });
+    s.querySelectorAll('[data-q]').forEach(function(b){ b.onclick=function(){ var x=QUICK[+b.dataset.q]; form.kind.value=x[2]; form.title.value=x[3]; form.msg.value=x[4]; form.act.value=x[5]; preview(); (x[4]?form.title:form.msg).focus(); }; });
+    $('mgClear').onclick=function(){ form.title.value=''; form.msg.value=''; form.act.value='none'; form.exp.value=''; $('mgMsgE').textContent=''; preview(); };
+    $('mgExit').onclick=exit;
+    var pubbing=false;
+    $('mgPub').onclick=async function(){
+      if(pubbing) return; var f=readForm(), E=$('mgMsgE'); E.textContent='';
+      if(!f.title||!f.message){ E.textContent='Add a title and a message.'; return; }
+      pubbing=true; $('mgPub').disabled=true;
+      var r=await sb.rpc('management_publish',{tok:TOKEN,k:f.kind,ti:f.title,msg:f.message,act:f.action,ttl_hours:form.exp.value?+form.exp.value:null});
+      pubbing=false; $('mgPub').disabled=false;
+      if(r.error){
+        if(/unauthorized/.test(r.error.message)){ toast('Session expired. Please sign in again.'); exit(); } else E.textContent='Could not publish. Check your connection and try again.';
+        return;
+      }
+      toast('Announcement published'); $('mgClear').click(); loadHistory();
+    };
+    preview(); loadHistory();
+  }
+  wire(); setTimeout(wire,1500);
 })();
 </script>
 </body>
